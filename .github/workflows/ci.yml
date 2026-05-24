@@ -7,6 +7,11 @@ on:
     branches: [main]
   workflow_dispatch:
 
+# 2026-06-02 以降、JavaScript Actions の既定が Node.js 24 になる予定。
+# 警告抑制のため明示的に Node.js 24 で動かす。
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 jobs:
   light:
     name: Lint + Light Test

@@ -10,6 +10,11 @@ on:
         description: 'リリースタグ名（例: v0.1.0）'
         required: true
 
+# 2026-06-02 以降、JavaScript Actions の既定が Node.js 24 になる予定。
+# 警告抑制のため明示的に Node.js 24 で動かす。
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 jobs:
   build:
     name: Build Windows Release

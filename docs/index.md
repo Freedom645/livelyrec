@@ -4,6 +4,8 @@ title: LivelyRec
 
 # LivelyRec
 
+**トップ** ｜ [インストール](installation.html) ｜ [使い方](usage.html) ｜ [配信支援オーバーレイ](broadcast.html)
+
 **pop'n music lively** のゲーム画面を OBS WebSocket 経由で取得し、画像認識でスコアを自動記録 + OBS ブラウザソース向けの配信支援オーバーレイを提供する、スタンドアロン **Windows アプリ**です。
 
 [GitHub リポジトリ](https://github.com/Freedom645/livelyrec){:target="_blank"}
