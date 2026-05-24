@@ -58,7 +58,24 @@ def test_pipeline_play_screen_extracts_play_metrics() -> None:
     assert analysis.detection.screen == ScreenType.PLAY
     assert analysis.play_metrics is not None
     assert analysis.result_metrics is None
-    assert analysis.play_metrics.score == 54210
+    # プレイ画面では楽曲名のみ OCR で取得。score/combo の OCR 呼び出しは
+    # I-027 対策で廃止したため None。
+    assert analysis.play_metrics.raw_song_text == "テスト曲"
+    assert analysis.play_metrics.score is None
+    assert analysis.play_metrics.combo is None
+
+
+def test_pipeline_play_skips_song_ocr_when_already_identified() -> None:
+    """analyze(song_already_identified=True) で楽曲名 OCR をスキップ（I-027）。"""
+    ocr = FakeOcr(items=[OcrItem("呼ばれない", 0.99, ())], text="")
+    pipeline = RecognitionPipeline(ocr, FakeDigit())
+    analysis = pipeline.analyze(
+        _frame_with_signature(59), song_already_identified=True
+    )
+    assert analysis.detection.screen == ScreenType.PLAY
+    assert analysis.play_metrics is not None
+    assert analysis.play_metrics.raw_song_text == ""
+    assert analysis.play_metrics.song_confidence == 0.0
 
 
 def test_pipeline_result_screen_extracts_result_metrics() -> None:

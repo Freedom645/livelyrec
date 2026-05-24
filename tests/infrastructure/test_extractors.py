@@ -139,13 +139,17 @@ def test_detect_clear_type(text: str, expected: ClearType | None) -> None:
 # ---- プレイ画面メトリクス抽出 ----
 
 def test_extract_play_metrics() -> None:
+    """プレイ画面メトリクスは楽曲名のみ OCR で取得し、score/combo は None
+    （I-027 対策で OCR 呼び出しを最小化、判定数は digit テンプレを使う）。
+    """
     frame = np.zeros((768, 1366, 3), dtype=np.uint8)
     ocr = FakeOcr(items=[OcrItem("テスト曲", 0.88, ())], text="054210")
     pm = extract_play_metrics(frame, ocr)
     assert pm.raw_song_text == "テスト曲"
-    assert pm.score == 54210
-    assert pm.combo == 54210
     assert pm.song_confidence == pytest.approx(0.88)
+    # score/combo の OCR 呼び出しは廃止（I-027）
+    assert pm.score is None
+    assert pm.combo is None
 
 
 def test_extract_play_metrics_no_song_text() -> None:
@@ -154,6 +158,16 @@ def test_extract_play_metrics_no_song_text() -> None:
     assert pm.raw_song_text == ""
     assert pm.song_confidence == 0.0
     assert pm.score is None
+
+
+def test_extract_play_metrics_skips_song_ocr_when_already_identified() -> None:
+    """楽曲特定済みのときは楽曲名 OCR を呼ばない（I-027 対策）。"""
+    frame = np.zeros((768, 1366, 3), dtype=np.uint8)
+    spy = FakeOcr(items=[OcrItem("呼ばれない", 0.99, ())], text="")
+    pm = extract_play_metrics(frame, spy, skip_song_ocr=True)
+    assert pm.raw_song_text == ""
+    assert pm.song_confidence == 0.0
+    # FakeOcr に呼び出し記録があれば確認するが、ここでは結果が固定値（空）になることで担保
 
 
 # ---- リザルト画面メトリクス抽出 ----

@@ -58,7 +58,11 @@ class AnalysisService:
         self._last_chart: Chart | None = None
 
     def analyze(self, frame_bgr: np.ndarray) -> AnalysisResult:
-        analysis = self._pipeline.analyze(frame_bgr)
+        # 楽曲特定済みなら楽曲名 OCR をスキップしてプレイ中の連続 OCR 呼び出し
+        # を最小化する（PaddleOCR ネイティブ層の access violation 対策、I-027）。
+        analysis = self._pipeline.analyze(
+            frame_bgr, song_already_identified=self._last_chart is not None
+        )
         screen = analysis.detection.screen
         accepted = self._state.transition(screen)
         if not accepted:

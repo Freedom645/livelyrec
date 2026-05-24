@@ -148,30 +148,42 @@ def extract_play_difficulty(frame_bgr: np.ndarray) -> Difficulty | None:
 
 
 def extract_play_metrics(
-    frame_bgr: np.ndarray, ocr, digit_recognizer=None
+    frame_bgr: np.ndarray,
+    ocr,
+    digit_recognizer=None,
+    *,
+    skip_song_ocr: bool = False,
 ) -> PlayMetrics:
-    """プレイ画面のメトリクスを抽出する。"""
-    song_roi = crop(frame_bgr, PLAY_ROI["song_name"])
-    masked = _mask_white_text(song_roi)
-    song_items = ocr.recognize(masked)
-    raw_song_text = "".join(item.text for item in song_items)
-    song_conf = (
-        sum(i.confidence for i in song_items) / len(song_items)
-        if song_items
-        else 0.0
-    )
+    """プレイ画面のメトリクスを抽出する。
 
-    score_text = ocr.recognize_text(crop(frame_bgr, PLAY_ROI["score"]))
-    score = parse_int_or(score_text)
-
-    combo_text = ocr.recognize_text(crop(frame_bgr, PLAY_ROI["combo"]))
-    combo = parse_int_or(combo_text)
+    プレイ中の連続的な OCR 呼び出しは PaddleOCR ネイティブ層で稀に
+    access violation を起こしてプロセスを強制終了させる（I-027）。
+    取得頻度と発火点を絞るため:
+    - 楽曲が既に特定済みのときは `skip_song_ocr=True` を渡すことで楽曲名
+      OCR の発火を抑止する。呼び出し側（`analysis_service`）が制御する。
+    - プレイ画面のスコア／コンボの OCR 呼び出しは廃止（リトライ検出は
+      判定数で十分機能する）。スコアアニメーション中の値読みでの誤検出
+      リスクも同時に排除される。
+    """
+    if skip_song_ocr:
+        raw_song_text = ""
+        song_conf = 0.0
+    else:
+        song_roi = crop(frame_bgr, PLAY_ROI["song_name"])
+        masked = _mask_white_text(song_roi)
+        song_items = ocr.recognize(masked)
+        raw_song_text = "".join(item.text for item in song_items)
+        song_conf = (
+            sum(i.confidence for i in song_items) / len(song_items)
+            if song_items
+            else 0.0
+        )
 
     return PlayMetrics(
         raw_song_text=raw_song_text,
         song_confidence=song_conf,
-        score=score,
-        combo=combo,
+        score=None,
+        combo=None,
         judgements=extract_play_judgements(frame_bgr, digit_recognizer),
         difficulty=extract_play_difficulty(frame_bgr),
     )

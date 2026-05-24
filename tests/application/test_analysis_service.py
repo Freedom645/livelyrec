@@ -38,7 +38,9 @@ class FakePipeline:
     def set(self, analysis: FrameAnalysis) -> None:
         self._analysis = analysis
 
-    def analyze(self, frame_bgr):  # noqa: ARG002
+    def analyze(self, frame_bgr, *, song_already_identified: bool = False):  # noqa: ARG002
+        # 楽曲特定の有無を呼び出し側が正しく渡してきていることをテストから検証可能に
+        self.last_song_already_identified = song_already_identified
         return self._analysis
 
 

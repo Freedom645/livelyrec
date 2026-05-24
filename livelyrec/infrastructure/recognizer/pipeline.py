@@ -37,7 +37,18 @@ class RecognitionPipeline:
         self._digit = digit_recognizer
         self._screen = ScreenDetector(ocr, signatures_path=screen_signatures_path)
 
-    def analyze(self, image_bgr: np.ndarray) -> FrameAnalysis:
+    def analyze(
+        self,
+        image_bgr: np.ndarray,
+        *,
+        song_already_identified: bool = False,
+    ) -> FrameAnalysis:
+        """1 フレームを解析する。
+
+        `song_already_identified=True` のとき、プレイ画面の楽曲名 OCR を
+        スキップする。プレイ中の連続 OCR 呼び出しを最小化して PaddleOCR
+        ネイティブ層の access violation 確率を下げるため（I-027）。
+        """
         norm = normalize_frame(image_bgr)
         detection = self._screen.detect(norm.image_bgr)
 
@@ -45,7 +56,12 @@ class RecognitionPipeline:
         result = None
         try:
             if detection.screen == ScreenType.PLAY:
-                play = extract_play_metrics(norm.image_bgr, self._ocr, self._digit)
+                play = extract_play_metrics(
+                    norm.image_bgr,
+                    self._ocr,
+                    self._digit,
+                    skip_song_ocr=song_already_identified,
+                )
             elif detection.screen == ScreenType.RESULT:
                 result = extract_result_metrics(
                     norm.image_bgr, self._ocr, self._digit
