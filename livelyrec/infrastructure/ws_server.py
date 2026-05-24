@@ -100,18 +100,23 @@ class WebSocketServer:
             self._loop.close()
 
     async def _serve(self) -> None:
+        # lan_publish=True 時は LAN 内の他PC（OBS 配信PC等）から到達できるよう
+        # 全インタフェース（0.0.0.0）にバインドする。lan_publish=False（既定）は
+        # 設定 host（既定 127.0.0.1）にバインドし、外部から到達不可とする。
+        bind_host = "0.0.0.0" if self._cfg.lan_publish else self._cfg.host  # noqa: S104
         self._server = await websockets.serve(
             self._handle_client,
-            self._cfg.host,
+            bind_host,
             self._cfg.port,
             max_queue=100,
             process_request=self._process_request,
         )
         self._ready.set()
         logger.info(
-            "ws server listening on ws://%s:%s/v1 (lan_publish=%s)",
-            self._cfg.host,
+            "ws server listening on ws://%s:%s/v1 (advertised=%s, lan_publish=%s)",
+            bind_host,
             self._cfg.port,
+            self._cfg.host,
             self._cfg.lan_publish,
         )
         try:

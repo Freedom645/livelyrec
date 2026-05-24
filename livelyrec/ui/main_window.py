@@ -24,6 +24,7 @@ from livelyrec.application.recording_service import RecordingService
 from livelyrec.application.update_service import UpdateService
 from livelyrec.infrastructure.config_store import AppSettings, ConfigStore
 from livelyrec.infrastructure.obs_client import OBSClient, ObsConfig
+from livelyrec.shared.network import resolve_advertised_host
 from livelyrec.ui.settings_dialog import SettingsDialog
 from livelyrec.ui.viewmodels.recording_vm import RecordingViewModel
 from livelyrec.ui.widgets.broadcast_url_panel import BroadcastUrlPanel
@@ -61,11 +62,16 @@ class MainWindow(QMainWindow):
         self._recording.add_listener(self._vm.post_event)
         self._vm.error_occurred.connect(self._on_error)
 
-        ws_url = (
-            f"ws://{settings.websocket_server.host}:{settings.websocket_server.port}/v1"
+        # LAN 公開時は他PC（OBS 配信PC等）からアクセスできるよう、
+        # 表示 URL の host を LAN IP に切り替える。lan_publish=False の通常運用では
+        # 設定値（既定 127.0.0.1）をそのまま使う。
+        adv_host = resolve_advertised_host(
+            settings.websocket_server.host,
+            settings.websocket_server.lan_publish,
         )
+        ws_url = f"ws://{adv_host}:{settings.websocket_server.port}/v1"
         browser_url = (
-            f"http://{settings.websocket_server.host}:{settings.websocket_server.port}/browser/index.html"
+            f"http://{adv_host}:{settings.websocket_server.port}/browser/index.html"
         )
         # LAN 公開・トークン認証時は、ブラウザソースが認証できるよう URL に
         # トークンを付与する（ブラウザはヘッダ認証ができないため）。
