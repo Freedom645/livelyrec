@@ -5,7 +5,6 @@
 
 from __future__ import annotations
 
-import secrets
 from collections.abc import Callable
 from dataclasses import replace
 
@@ -27,6 +26,7 @@ from PySide6.QtWidgets import (
 )
 
 from livelyrec.infrastructure.config_store import AppSettings
+from livelyrec.shared.network import resolve_advertised_host
 
 
 class SettingsDialog(QDialog):
@@ -161,22 +161,47 @@ class SettingsDialog(QDialog):
         self._ws_port = QSpinBox()
         self._ws_port.setRange(1, 65535)
         self._ws_port.setValue(self._settings.websocket_server.port)
-        self._ws_lan = QCheckBox("LAN公開（外部接続を許可。トークン必須）")
+        self._ws_lan = QCheckBox("LAN公開（外部接続を許可。家庭内LANを想定）")
         self._ws_lan.setChecked(self._settings.websocket_server.lan_publish)
-        self._ws_token = QLineEdit(self._settings.websocket_server.token)
-        gen_btn = QPushButton("再生成")
-        gen_btn.clicked.connect(self._regen_token)
-        token_row = QHBoxLayout()
-        token_row.addWidget(self._ws_token)
-        token_row.addWidget(gen_btn)
+        # 外部連携ツール（プラグイン等）向けの WS URI。メイン画面では表示せず
+        # 設定からのみ参照できるようにする。表示時点の host/port/lan_publish から
+        # 算出する読み取り専用フィールド＋コピーボタン。
+        self._ws_uri = QLineEdit(self._build_ws_uri())
+        self._ws_uri.setReadOnly(True)
+        ws_uri_copy = QPushButton("コピー")
+        ws_uri_copy.clicked.connect(self._copy_ws_uri)
+        ws_uri_row = QHBoxLayout()
+        ws_uri_row.addWidget(self._ws_uri, stretch=1)
+        ws_uri_row.addWidget(ws_uri_copy)
         layout.addRow("ホスト:", self._ws_host)
         layout.addRow("ポート:", self._ws_port)
         layout.addRow("", self._ws_lan)
-        layout.addRow("トークン:", token_row)
+        layout.addRow("外部連携URI:", ws_uri_row)
+        # ホスト・ポート・LAN公開フラグの変更時に WS URI 表示を追従させる
+        self._ws_host.textChanged.connect(lambda _t: self._refresh_ws_uri())
+        self._ws_port.valueChanged.connect(lambda _v: self._refresh_ws_uri())
+        self._ws_lan.toggled.connect(lambda _c: self._refresh_ws_uri())
         return w
 
-    def _regen_token(self) -> None:
-        self._ws_token.setText("livelyrec_token_" + secrets.token_urlsafe(24))
+    def _build_ws_uri(self) -> str:
+        host = (self._ws_host.text().strip() or "127.0.0.1") if hasattr(
+            self, "_ws_host"
+        ) else self._settings.websocket_server.host
+        port = self._ws_port.value() if hasattr(self, "_ws_port") else (
+            self._settings.websocket_server.port
+        )
+        lan = self._ws_lan.isChecked() if hasattr(self, "_ws_lan") else (
+            self._settings.websocket_server.lan_publish
+        )
+        adv = resolve_advertised_host(host, lan)
+        return f"ws://{adv}:{port}/v1"
+
+    def _refresh_ws_uri(self) -> None:
+        self._ws_uri.setText(self._build_ws_uri())
+
+    def _copy_ws_uri(self) -> None:
+        self._ws_uri.selectAll()
+        self._ws_uri.copy()
 
     # ---- 配信支援タブ ----
     def _build_browser_tab(self) -> QWidget:
@@ -230,7 +255,9 @@ class SettingsDialog(QDialog):
                 host=self._ws_host.text().strip() or "127.0.0.1",
                 port=self._ws_port.value(),
                 lan_publish=self._ws_lan.isChecked(),
-                token=self._ws_token.text().strip(),
+                # token は UI から除外（家庭内 LAN 想定。後方互換のため
+                # settings.json 直編集で残せるよう既存値を維持する）。
+                token=s.websocket_server.token,
             ),
             browser_source=replace(
                 s.browser_source,

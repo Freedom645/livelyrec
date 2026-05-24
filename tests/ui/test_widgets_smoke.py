@@ -74,20 +74,21 @@ def test_recent_results_panel_smoke(qtbot) -> None:
 
 
 def test_broadcast_url_panel_smoke(qtbot) -> None:
-    panel = BroadcastUrlPanel(
-        "ws://127.0.0.1:14514/v1", "http://127.0.0.1:14514/browser/index.html"
-    )
+    panel = BroadcastUrlPanel("http://127.0.0.1:14514/browser/index.html")
     qtbot.addWidget(panel)
 
 
 def test_settings_dialog_smoke(qtbot) -> None:
     dlg = SettingsDialog(AppSettings())
     qtbot.addWidget(dlg)
-    # 設定の取り出しとトークン再生成が例外なく動作する
+    # 設定の取り出しが例外なく動作する
     out = dlg.to_settings()
     assert out.obs.host
-    dlg._regen_token()
-    assert dlg.to_settings().websocket_server.token.startswith("livelyrec_token_")
+    # 外部連携 URI（読み取り専用）が WebSocket タブに表示される
+    assert dlg._ws_uri.text().startswith("ws://")
+    assert dlg._ws_uri.text().endswith("/v1")
+    # トークンは UI から触れず、既存 settings 値が維持される（家庭内 LAN 想定）
+    assert out.websocket_server.token == dlg._settings.websocket_server.token
 
 
 def test_main_window_smoke(qtbot, tmp_path: Path) -> None:

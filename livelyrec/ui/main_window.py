@@ -69,12 +69,11 @@ class MainWindow(QMainWindow):
             settings.websocket_server.host,
             settings.websocket_server.lan_publish,
         )
-        ws_url = f"ws://{adv_host}:{settings.websocket_server.port}/v1"
         browser_url = (
             f"http://{adv_host}:{settings.websocket_server.port}/browser/index.html"
         )
-        # LAN 公開・トークン認証時は、ブラウザソースが認証できるよう URL に
-        # トークンを付与する（ブラウザはヘッダ認証ができないため）。
+        # 後方互換: settings.json で token を明示設定している上級利用者向けに、
+        # トークン付与は維持する。UI からトークン設定 UI は廃止（家庭内 LAN 想定）。
         if settings.websocket_server.lan_publish and settings.websocket_server.token:
             browser_url += f"?token={settings.websocket_server.token}"
 
@@ -86,7 +85,7 @@ class MainWindow(QMainWindow):
             self._vm, settings.recording.business_day_rollover_hour, self
         )
         self._recent_panel = RecentResultsPanel(self._vm, parent=self)
-        self._url_panel = BroadcastUrlPanel(ws_url, browser_url, self)
+        self._url_panel = BroadcastUrlPanel(browser_url, self)
 
         central = QWidget(self)
         outer = QVBoxLayout(central)
