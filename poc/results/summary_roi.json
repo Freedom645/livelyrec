@@ -1,0 +1,737 @@
+{
+  "engine": "PaddleOCR",
+  "version": "2.7.3",
+  "mode": "ROI cropped",
+  "init_elapsed_sec": 0.461,
+  "play": {
+    "n": 11,
+    "avg_total_elapsed_sec": 0.0926,
+    "min_total_elapsed_sec": 0.0489,
+    "max_total_elapsed_sec": 0.3443,
+    "song_id_accuracy": 1.0,
+    "song_id_correct": 11,
+    "song_id_total": 11
+  },
+  "result": {
+    "n": 6,
+    "avg_total_elapsed_sec": 0.1152,
+    "min_total_elapsed_sec": 0.0655,
+    "max_total_elapsed_sec": 0.2239
+  },
+  "per_image": [
+    {
+      "screen": "play",
+      "file": "Screenshot 2026-05-18 12-17-43.png",
+      "sub_state": null,
+      "total_elapsed_sec": 0.3443,
+      "per_roi": {
+        "song_name": {
+          "elapsed_sec": 0.2007,
+          "text_raw": "ぼかぼかレトロード",
+          "confidence": 0.9385738372802734,
+          "n_items": 1
+        },
+        "score": {
+          "elapsed_sec": 0.1437,
+          "text_raw": "000000",
+          "confidence": 0.9614459872245789,
+          "n_items": 1
+        }
+      },
+      "song": {
+        "expected": "ぽぽぽかレトロード",
+        "ocr_raw": "ぼかぼかレトロード",
+        "matched": "ぽぽぽかレトロード",
+        "match_score": 66.66666666666667,
+        "identified": "ぽぽぽかレトロード",
+        "correct": true
+      },
+      "score_text": "000000",
+      "score_digits": "000000"
+    },
+    {
+      "screen": "play",
+      "file": "Screenshot 2026-05-18 12-18-04.png",
+      "sub_state": null,
+      "total_elapsed_sec": 0.0556,
+      "per_roi": {
+        "song_name": {
+          "elapsed_sec": 0.0336,
+          "text_raw": "ぼかぼかレトロード",
+          "confidence": 0.9385738372802734,
+          "n_items": 1
+        },
+        "score": {
+          "elapsed_sec": 0.022,
+          "text_raw": "008234",
+          "confidence": 0.9972333908081055,
+          "n_items": 1
+        }
+      },
+      "song": {
+        "expected": "ぽぽぽかレトロード",
+        "ocr_raw": "ぼかぼかレトロード",
+        "matched": "ぽぽぽかレトロード",
+        "match_score": 66.66666666666667,
+        "identified": "ぽぽぽかレトロード",
+        "correct": true
+      },
+      "score_text": "008234",
+      "score_digits": "008234"
+    },
+    {
+      "screen": "play",
+      "file": "Screenshot 2026-05-18 12-18-40.png",
+      "sub_state": null,
+      "total_elapsed_sec": 0.0509,
+      "per_roi": {
+        "song_name": {
+          "elapsed_sec": 0.0318,
+          "text_raw": "ぼかぼかレトロード",
+          "confidence": 0.9385738372802734,
+          "n_items": 1
+        },
+        "score": {
+          "elapsed_sec": 0.019,
+          "text_raw": "030210",
+          "confidence": 0.9984727501869202,
+          "n_items": 1
+        }
+      },
+      "song": {
+        "expected": "ぽぽぽかレトロード",
+        "ocr_raw": "ぼかぼかレトロード",
+        "matched": "ぽぽぽかレトロード",
+        "match_score": 66.66666666666667,
+        "identified": "ぽぽぽかレトロード",
+        "correct": true
+      },
+      "score_text": "030210",
+      "score_digits": "030210"
+    },
+    {
+      "screen": "play",
+      "file": "Screenshot 2026-05-18 12-19-48.png",
+      "sub_state": null,
+      "total_elapsed_sec": 0.0501,
+      "per_roi": {
+        "song_name": {
+          "elapsed_sec": 0.0313,
+          "text_raw": "ぼかぼかレトロード",
+          "confidence": 0.9385738372802734,
+          "n_items": 1
+        },
+        "score": {
+          "elapsed_sec": 0.0188,
+          "text_raw": "074123",
+          "confidence": 0.9974350929260254,
+          "n_items": 1
+        }
+      },
+      "song": {
+        "expected": "ぽぽぽかレトロード",
+        "ocr_raw": "ぼかぼかレトロード",
+        "matched": "ぽぽぽかレトロード",
+        "match_score": 66.66666666666667,
+        "identified": "ぽぽぽかレトロード",
+        "correct": true
+      },
+      "score_text": "074123",
+      "score_digits": "074123"
+    },
+    {
+      "screen": "play",
+      "file": "Screenshot 2026-05-18 12-22-27.png",
+      "sub_state": null,
+      "total_elapsed_sec": 0.0489,
+      "per_roi": {
+        "song_name": {
+          "elapsed_sec": 0.0297,
+          "text_raw": "ぼかぼかレトロード",
+          "confidence": 0.9385738372802734,
+          "n_items": 1
+        },
+        "score": {
+          "elapsed_sec": 0.0192,
+          "text_raw": "084374",
+          "confidence": 0.9990141987800598,
+          "n_items": 1
+        }
+      },
+      "song": {
+        "expected": "ぽぽぽかレトロード",
+        "ocr_raw": "ぼかぼかレトロード",
+        "matched": "ぽぽぽかレトロード",
+        "match_score": 66.66666666666667,
+        "identified": "ぽぽぽかレトロード",
+        "correct": true
+      },
+      "score_text": "084374",
+      "score_digits": "084374"
+    },
+    {
+      "screen": "play",
+      "file": "Screenshot 2026-05-18 12-23-29.png",
+      "sub_state": null,
+      "total_elapsed_sec": 0.0503,
+      "per_roi": {
+        "song_name": {
+          "elapsed_sec": 0.0303,
+          "text_raw": "ぼかぼかレトロード",
+          "confidence": 0.9385738372802734,
+          "n_items": 1
+        },
+        "score": {
+          "elapsed_sec": 0.0199,
+          "text_raw": "000000",
+          "confidence": 0.958375871181488,
+          "n_items": 1
+        }
+      },
+      "song": {
+        "expected": "ぽぽぽかレトロード",
+        "ocr_raw": "ぼかぼかレトロード",
+        "matched": "ぽぽぽかレトロード",
+        "match_score": 66.66666666666667,
+        "identified": "ぽぽぽかレトロード",
+        "correct": true
+      },
+      "score_text": "000000",
+      "score_digits": "000000"
+    },
+    {
+      "screen": "play",
+      "file": "Screenshot 2026-05-18 12-23-38.png",
+      "sub_state": null,
+      "total_elapsed_sec": 0.0491,
+      "per_roi": {
+        "song_name": {
+          "elapsed_sec": 0.0303,
+          "text_raw": "ぼかぼかレトロード",
+          "confidence": 0.9385738372802734,
+          "n_items": 1
+        },
+        "score": {
+          "elapsed_sec": 0.0188,
+          "text_raw": "000000",
+          "confidence": 0.9418210983276367,
+          "n_items": 1
+        }
+      },
+      "song": {
+        "expected": "ぽぽぽかレトロード",
+        "ocr_raw": "ぼかぼかレトロード",
+        "matched": "ぽぽぽかレトロード",
+        "match_score": 66.66666666666667,
+        "identified": "ぽぽぽかレトロード",
+        "correct": true
+      },
+      "score_text": "000000",
+      "score_digits": "000000"
+    },
+    {
+      "screen": "play",
+      "file": "Screenshot 2026-05-18 12-25-29.png",
+      "sub_state": "Are you ready",
+      "total_elapsed_sec": 0.1249,
+      "per_roi": {
+        "song_name": {
+          "elapsed_sec": 0.1041,
+          "text_raw": "漆黒のスペシャルプリンセスサンデー",
+          "confidence": 0.973260223865509,
+          "n_items": 1
+        },
+        "score": {
+          "elapsed_sec": 0.0209,
+          "text_raw": "000000",
+          "confidence": 0.958375871181488,
+          "n_items": 1
+        }
+      },
+      "song": {
+        "expected": "漆黒のスペシャルプリンセスサンデー",
+        "ocr_raw": "漆黒のスペシャルプリンセスサンデー",
+        "matched": "漆黒のスペシャルプリンセスサンデー",
+        "match_score": 100.0,
+        "identified": "漆黒のスペシャルプリンセスサンデー",
+        "correct": true
+      },
+      "score_text": "000000",
+      "score_digits": "000000"
+    },
+    {
+      "screen": "play",
+      "file": "Screenshot 2026-05-18 12-27-38.png",
+      "sub_state": null,
+      "total_elapsed_sec": 0.0587,
+      "per_roi": {
+        "song_name": {
+          "elapsed_sec": 0.0365,
+          "text_raw": "漆黒のスペシャルプリンセスサンデーDOrd!",
+          "confidence": 0.7617859840393066,
+          "n_items": 2
+        },
+        "score": {
+          "elapsed_sec": 0.0222,
+          "text_raw": "092407",
+          "confidence": 0.9991191029548645,
+          "n_items": 1
+        }
+      },
+      "song": {
+        "expected": "漆黒のスペシャルプリンセスサンデー",
+        "ocr_raw": "漆黒のスペシャルプリンセスサンデーDOrd!",
+        "matched": "漆黒のスペシャルプリンセスサンデー",
+        "match_score": 87.17948717948718,
+        "identified": "漆黒のスペシャルプリンセスサンデー",
+        "correct": true
+      },
+      "score_text": "092407",
+      "score_digits": "092407"
+    },
+    {
+      "screen": "play",
+      "file": "Screenshot 2026-05-18 12-29-56.png",
+      "sub_state": "Are you ready",
+      "total_elapsed_sec": 0.1288,
+      "per_roi": {
+        "song_name": {
+          "elapsed_sec": 0.1073,
+          "text_raw": "漆黒のスペシャルプリンセスサンデーEos!",
+          "confidence": 0.8434171974658966,
+          "n_items": 2
+        },
+        "score": {
+          "elapsed_sec": 0.0215,
+          "text_raw": "000000",
+          "confidence": 0.958375871181488,
+          "n_items": 1
+        }
+      },
+      "song": {
+        "expected": "漆黒のスペシャルプリンセスサンデー",
+        "ocr_raw": "漆黒のスペシャルプリンセスサンデーEos!",
+        "matched": "漆黒のスペシャルプリンセスサンデー",
+        "match_score": 89.47368421052632,
+        "identified": "漆黒のスペシャルプリンセスサンデー",
+        "correct": true
+      },
+      "score_text": "000000",
+      "score_digits": "000000"
+    },
+    {
+      "screen": "play",
+      "file": "Screenshot 2026-05-18 12-32-03.png",
+      "sub_state": null,
+      "total_elapsed_sec": 0.0572,
+      "per_roi": {
+        "song_name": {
+          "elapsed_sec": 0.038,
+          "text_raw": "漆黒のスペシャルプリンセスサンデーEos!",
+          "confidence": 0.8434171974658966,
+          "n_items": 2
+        },
+        "score": {
+          "elapsed_sec": 0.0192,
+          "text_raw": "087268",
+          "confidence": 0.9998860359191895,
+          "n_items": 1
+        }
+      },
+      "song": {
+        "expected": "漆黒のスペシャルプリンセスサンデー",
+        "ocr_raw": "漆黒のスペシャルプリンセスサンデーEos!",
+        "matched": "漆黒のスペシャルプリンセスサンデー",
+        "match_score": 89.47368421052632,
+        "identified": "漆黒のスペシャルプリンセスサンデー",
+        "correct": true
+      },
+      "score_text": "087268",
+      "score_digits": "087268"
+    },
+    {
+      "screen": "result",
+      "file": "Screenshot 2026-05-18 12-20-06.png",
+      "clear_type_gt": "FAILED",
+      "total_elapsed_sec": 0.2239,
+      "per_roi": {
+        "score": {
+          "elapsed_sec": 0.0874,
+          "text_raw": "74123",
+          "confidence": 0.9979804158210754,
+          "n_items": 1,
+          "digits": "74123"
+        },
+        "cool": {
+          "elapsed_sec": 0.0595,
+          "text_raw": "",
+          "confidence": null,
+          "n_items": 0,
+          "digits": ""
+        },
+        "great": {
+          "elapsed_sec": 0.0069,
+          "text_raw": "",
+          "confidence": null,
+          "n_items": 0,
+          "digits": ""
+        },
+        "good": {
+          "elapsed_sec": 0.0061,
+          "text_raw": "",
+          "confidence": null,
+          "n_items": 0,
+          "digits": ""
+        },
+        "bad": {
+          "elapsed_sec": 0.0055,
+          "text_raw": "",
+          "confidence": null,
+          "n_items": 0,
+          "digits": ""
+        },
+        "combo": {
+          "elapsed_sec": 0.0206,
+          "text_raw": "109",
+          "confidence": 0.9995139241218567,
+          "n_items": 1,
+          "digits": "109"
+        },
+        "best_score": {
+          "elapsed_sec": 0.0192,
+          "text_raw": "",
+          "confidence": null,
+          "n_items": 0,
+          "digits": ""
+        },
+        "best_diff": {
+          "elapsed_sec": 0.0187,
+          "text_raw": "15872",
+          "confidence": 0.8006818890571594,
+          "n_items": 1,
+          "digits": "15872"
+        }
+      }
+    },
+    {
+      "screen": "result",
+      "file": "Screenshot 2026-05-18 12-22-44.png",
+      "clear_type_gt": "CLEAR",
+      "total_elapsed_sec": 0.0887,
+      "per_roi": {
+        "score": {
+          "elapsed_sec": 0.0172,
+          "text_raw": "84374",
+          "confidence": 0.9969307780265808,
+          "n_items": 1,
+          "digits": "84374"
+        },
+        "cool": {
+          "elapsed_sec": 0.0057,
+          "text_raw": "",
+          "confidence": null,
+          "n_items": 0,
+          "digits": ""
+        },
+        "great": {
+          "elapsed_sec": 0.0055,
+          "text_raw": "",
+          "confidence": null,
+          "n_items": 0,
+          "digits": ""
+        },
+        "good": {
+          "elapsed_sec": 0.0057,
+          "text_raw": "",
+          "confidence": null,
+          "n_items": 0,
+          "digits": ""
+        },
+        "bad": {
+          "elapsed_sec": 0.0046,
+          "text_raw": "",
+          "confidence": null,
+          "n_items": 0,
+          "digits": ""
+        },
+        "combo": {
+          "elapsed_sec": 0.0173,
+          "text_raw": "124",
+          "confidence": 0.9922153949737549,
+          "n_items": 1,
+          "digits": "124"
+        },
+        "best_score": {
+          "elapsed_sec": 0.0171,
+          "text_raw": "",
+          "confidence": null,
+          "n_items": 0,
+          "digits": ""
+        },
+        "best_diff": {
+          "elapsed_sec": 0.0157,
+          "text_raw": "5626",
+          "confidence": 0.9756610989570618,
+          "n_items": 1,
+          "digits": "5626"
+        }
+      }
+    },
+    {
+      "screen": "result",
+      "file": "Screenshot 2026-05-18 12-23-54.png",
+      "clear_type_gt": "FAILED",
+      "total_elapsed_sec": 0.1271,
+      "per_roi": {
+        "score": {
+          "elapsed_sec": 0.017,
+          "text_raw": "",
+          "confidence": null,
+          "n_items": 0,
+          "digits": ""
+        },
+        "cool": {
+          "elapsed_sec": 0.0053,
+          "text_raw": "",
+          "confidence": null,
+          "n_items": 0,
+          "digits": ""
+        },
+        "great": {
+          "elapsed_sec": 0.0051,
+          "text_raw": "",
+          "confidence": null,
+          "n_items": 0,
+          "digits": ""
+        },
+        "good": {
+          "elapsed_sec": 0.0059,
+          "text_raw": "",
+          "confidence": null,
+          "n_items": 0,
+          "digits": ""
+        },
+        "bad": {
+          "elapsed_sec": 0.0051,
+          "text_raw": "",
+          "confidence": null,
+          "n_items": 0,
+          "digits": ""
+        },
+        "combo": {
+          "elapsed_sec": 0.0048,
+          "text_raw": "",
+          "confidence": null,
+          "n_items": 0,
+          "digits": ""
+        },
+        "best_score": {
+          "elapsed_sec": 0.0167,
+          "text_raw": "",
+          "confidence": null,
+          "n_items": 0,
+          "digits": ""
+        },
+        "best_diff": {
+          "elapsed_sec": 0.0673,
+          "text_raw": "-90000",
+          "confidence": 0.8774671852588654,
+          "n_items": 2,
+          "digits": "90000"
+        }
+      }
+    },
+    {
+      "screen": "result",
+      "file": "Screenshot 2026-05-18 12-27-48.png",
+      "clear_type_gt": null,
+      "total_elapsed_sec": 0.0655,
+      "per_roi": {
+        "score": {
+          "elapsed_sec": 0.021,
+          "text_raw": "00000",
+          "confidence": 0.9664543867111206,
+          "n_items": 1,
+          "digits": "00000"
+        },
+        "cool": {
+          "elapsed_sec": 0.0066,
+          "text_raw": "",
+          "confidence": null,
+          "n_items": 0,
+          "digits": ""
+        },
+        "great": {
+          "elapsed_sec": 0.0062,
+          "text_raw": "",
+          "confidence": null,
+          "n_items": 0,
+          "digits": ""
+        },
+        "good": {
+          "elapsed_sec": 0.0052,
+          "text_raw": "",
+          "confidence": null,
+          "n_items": 0,
+          "digits": ""
+        },
+        "bad": {
+          "elapsed_sec": 0.0058,
+          "text_raw": "",
+          "confidence": null,
+          "n_items": 0,
+          "digits": ""
+        },
+        "combo": {
+          "elapsed_sec": 0.0064,
+          "text_raw": "",
+          "confidence": null,
+          "n_items": 0,
+          "digits": ""
+        },
+        "best_score": {
+          "elapsed_sec": 0.0064,
+          "text_raw": "",
+          "confidence": null,
+          "n_items": 0,
+          "digits": ""
+        },
+        "best_diff": {
+          "elapsed_sec": 0.008,
+          "text_raw": "",
+          "confidence": null,
+          "n_items": 0,
+          "digits": ""
+        }
+      }
+    },
+    {
+      "screen": "result",
+      "file": "Screenshot 2026-05-18 12-27-52.png",
+      "clear_type_gt": "CLEAR",
+      "total_elapsed_sec": 0.0687,
+      "per_roi": {
+        "score": {
+          "elapsed_sec": 0.0072,
+          "text_raw": "",
+          "confidence": null,
+          "n_items": 0,
+          "digits": ""
+        },
+        "cool": {
+          "elapsed_sec": 0.0059,
+          "text_raw": "",
+          "confidence": null,
+          "n_items": 0,
+          "digits": ""
+        },
+        "great": {
+          "elapsed_sec": 0.0053,
+          "text_raw": "",
+          "confidence": null,
+          "n_items": 0,
+          "digits": ""
+        },
+        "good": {
+          "elapsed_sec": 0.005,
+          "text_raw": "",
+          "confidence": null,
+          "n_items": 0,
+          "digits": ""
+        },
+        "bad": {
+          "elapsed_sec": 0.0051,
+          "text_raw": "",
+          "confidence": null,
+          "n_items": 0,
+          "digits": ""
+        },
+        "combo": {
+          "elapsed_sec": 0.017,
+          "text_raw": "129",
+          "confidence": 0.9957353472709656,
+          "n_items": 1,
+          "digits": "129"
+        },
+        "best_score": {
+          "elapsed_sec": 0.0056,
+          "text_raw": "",
+          "confidence": null,
+          "n_items": 0,
+          "digits": ""
+        },
+        "best_diff": {
+          "elapsed_sec": 0.0175,
+          "text_raw": "+9２４０７",
+          "confidence": 0.6958091259002686,
+          "n_items": 1,
+          "digits": "92407"
+        }
+      }
+    },
+    {
+      "screen": "result",
+      "file": "Screenshot 2026-05-18 12-28-30.png",
+      "clear_type_gt": "FAILED",
+      "total_elapsed_sec": 0.1173,
+      "per_roi": {
+        "score": {
+          "elapsed_sec": 0.0189,
+          "text_raw": "",
+          "confidence": null,
+          "n_items": 0,
+          "digits": ""
+        },
+        "cool": {
+          "elapsed_sec": 0.0156,
+          "text_raw": "",
+          "confidence": null,
+          "n_items": 0,
+          "digits": ""
+        },
+        "great": {
+          "elapsed_sec": 0.0098,
+          "text_raw": "",
+          "confidence": null,
+          "n_items": 0,
+          "digits": ""
+        },
+        "good": {
+          "elapsed_sec": 0.0101,
+          "text_raw": "",
+          "confidence": null,
+          "n_items": 0,
+          "digits": ""
+        },
+        "bad": {
+          "elapsed_sec": 0.009,
+          "text_raw": "",
+          "confidence": null,
+          "n_items": 0,
+          "digits": ""
+        },
+        "combo": {
+          "elapsed_sec": 0.0084,
+          "text_raw": "",
+          "confidence": null,
+          "n_items": 0,
+          "digits": ""
+        },
+        "best_score": {
+          "elapsed_sec": 0.0215,
+          "text_raw": "92407",
+          "confidence": 0.9519754648208618,
+          "n_items": 1,
+          "digits": "92407"
+        },
+        "best_diff": {
+          "elapsed_sec": 0.024,
+          "text_raw": "-92407",
+          "confidence": 0.8966929316520691,
+          "n_items": 1,
+          "digits": "92407"
+        }
+      }
+    }
+  ]
+}

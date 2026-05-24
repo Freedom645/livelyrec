@@ -1,0 +1,565 @@
+{
+  "engine": "PaddleOCR",
+  "version": "2.7.3",
+  "paddlepaddle": "2.6.2",
+  "lang": "japan",
+  "init_elapsed_sec": 8.814,
+  "n_images": 41,
+  "n_errors": 0,
+  "total_elapsed_sec": 18.978,
+  "avg_elapsed_sec": 0.463,
+  "max_elapsed_sec": 0.957,
+  "min_elapsed_sec": 0.079,
+  "by_screen": {
+    "オプション画面": {
+      "n": 2,
+      "n_eval_target": 0,
+      "song_exact": 0,
+      "song_fuzzy_ge_90": 0,
+      "elapsed_sec_sum": 1.145,
+      "errors": 0
+    },
+    "プレイ画面": {
+      "n": 11,
+      "n_eval_target": 11,
+      "song_exact": 4,
+      "song_fuzzy_ge_90": 4,
+      "elapsed_sec_sum": 3.18,
+      "errors": 0
+    },
+    "プレイ画面前ロード画面": {
+      "n": 3,
+      "n_eval_target": 0,
+      "song_exact": 0,
+      "song_fuzzy_ge_90": 0,
+      "elapsed_sec_sum": 0.554,
+      "errors": 0
+    },
+    "リザルト画面": {
+      "n": 6,
+      "n_eval_target": 6,
+      "song_exact": 0,
+      "song_fuzzy_ge_90": 3,
+      "elapsed_sec_sum": 1.954,
+      "errors": 0
+    },
+    "準備画面": {
+      "n": 2,
+      "n_eval_target": 0,
+      "song_exact": 0,
+      "song_fuzzy_ge_90": 0,
+      "elapsed_sec_sum": 0.775,
+      "errors": 0
+    },
+    "準備画面前ロード画面": {
+      "n": 4,
+      "n_eval_target": 0,
+      "song_exact": 0,
+      "song_fuzzy_ge_90": 0,
+      "elapsed_sec_sum": 0.42899999999999994,
+      "errors": 0
+    },
+    "選曲画面": {
+      "n": 13,
+      "n_eval_target": 0,
+      "song_exact": 0,
+      "song_fuzzy_ge_90": 0,
+      "elapsed_sec_sum": 10.941,
+      "errors": 0
+    }
+  },
+  "per_image": [
+    {
+      "file": "オプション画面\\Screenshot 2026-05-18 12-17-14.png",
+      "screen": "オプション画面",
+      "elapsed_sec": 0.809,
+      "n_items": 54,
+      "song_eval": {
+        "expected": null,
+        "best_match": null,
+        "exact": null,
+        "fuzzy": null
+      }
+    },
+    {
+      "file": "オプション画面\\Screenshot 2026-05-18 12-29-31.png",
+      "screen": "オプション画面",
+      "elapsed_sec": 0.336,
+      "n_items": 31,
+      "song_eval": {
+        "expected": null,
+        "best_match": null,
+        "exact": null,
+        "fuzzy": null
+      }
+    },
+    {
+      "file": "プレイ画面\\Screenshot 2026-05-18 12-17-43.png",
+      "screen": "プレイ画面",
+      "elapsed_sec": 0.268,
+      "n_items": 24,
+      "song_eval": {
+        "expected": "ぽぽぽかレトロード",
+        "best_match": "ほかぼかレトロード",
+        "exact": false,
+        "fuzzy": 80.0
+      }
+    },
+    {
+      "file": "プレイ画面\\Screenshot 2026-05-18 12-18-04.png",
+      "screen": "プレイ画面",
+      "elapsed_sec": 0.298,
+      "n_items": 26,
+      "song_eval": {
+        "expected": "ぽぽぽかレトロード",
+        "best_match": "ほかぼかレトロード",
+        "exact": false,
+        "fuzzy": 80.0
+      }
+    },
+    {
+      "file": "プレイ画面\\Screenshot 2026-05-18 12-18-40.png",
+      "screen": "プレイ画面",
+      "elapsed_sec": 0.32,
+      "n_items": 31,
+      "song_eval": {
+        "expected": "ぽぽぽかレトロード",
+        "best_match": "ほかぼかレトロード",
+        "exact": false,
+        "fuzzy": 80.0
+      }
+    },
+    {
+      "file": "プレイ画面\\Screenshot 2026-05-18 12-19-48.png",
+      "screen": "プレイ画面",
+      "elapsed_sec": 0.293,
+      "n_items": 29,
+      "song_eval": {
+        "expected": "ぽぽぽかレトロード",
+        "best_match": "ほかぼかレトロード",
+        "exact": false,
+        "fuzzy": 80.0
+      }
+    },
+    {
+      "file": "プレイ画面\\Screenshot 2026-05-18 12-22-27.png",
+      "screen": "プレイ画面",
+      "elapsed_sec": 0.236,
+      "n_items": 26,
+      "song_eval": {
+        "expected": "ぽぽぽかレトロード",
+        "best_match": "ほかぼかレトロード",
+        "exact": false,
+        "fuzzy": 80.0
+      }
+    },
+    {
+      "file": "プレイ画面\\Screenshot 2026-05-18 12-23-29.png",
+      "screen": "プレイ画面",
+      "elapsed_sec": 0.265,
+      "n_items": 24,
+      "song_eval": {
+        "expected": "ぽぽぽかレトロード",
+        "best_match": "ほかぼかレトロード",
+        "exact": false,
+        "fuzzy": 80.0
+      }
+    },
+    {
+      "file": "プレイ画面\\Screenshot 2026-05-18 12-23-38.png",
+      "screen": "プレイ画面",
+      "elapsed_sec": 0.215,
+      "n_items": 21,
+      "song_eval": {
+        "expected": "ぽぽぽかレトロード",
+        "best_match": "ほかぼかレトロード",
+        "exact": false,
+        "fuzzy": 80.0
+      }
+    },
+    {
+      "file": "プレイ画面\\Screenshot 2026-05-18 12-25-29.png",
+      "screen": "プレイ画面",
+      "elapsed_sec": 0.279,
+      "n_items": 24,
+      "song_eval": {
+        "expected": "漆黒のスペシャルプリンセスサンデー",
+        "best_match": "漆黒のスペシャルプリンセスサンデー",
+        "exact": true,
+        "fuzzy": 100.0
+      }
+    },
+    {
+      "file": "プレイ画面\\Screenshot 2026-05-18 12-27-38.png",
+      "screen": "プレイ画面",
+      "elapsed_sec": 0.318,
+      "n_items": 25,
+      "song_eval": {
+        "expected": "漆黒のスペシャルプリンセスサンデー",
+        "best_match": "漆黒のスペシャルプリンセスサンデー",
+        "exact": true,
+        "fuzzy": 100.0
+      }
+    },
+    {
+      "file": "プレイ画面\\Screenshot 2026-05-18 12-29-56.png",
+      "screen": "プレイ画面",
+      "elapsed_sec": 0.396,
+      "n_items": 23,
+      "song_eval": {
+        "expected": "漆黒のスペシャルプリンセスサンデー",
+        "best_match": "漆黒のスペシャルプリンセスサンデー",
+        "exact": true,
+        "fuzzy": 100.0
+      }
+    },
+    {
+      "file": "プレイ画面\\Screenshot 2026-05-18 12-32-03.png",
+      "screen": "プレイ画面",
+      "elapsed_sec": 0.292,
+      "n_items": 27,
+      "song_eval": {
+        "expected": "漆黒のスペシャルプリンセスサンデー",
+        "best_match": "漆黒のスペシャルプリンセスサンデー",
+        "exact": true,
+        "fuzzy": 100.0
+      }
+    },
+    {
+      "file": "プレイ画面前ロード画面\\Screenshot 2026-05-18 12-17-41.png",
+      "screen": "プレイ画面前ロード画面",
+      "elapsed_sec": 0.156,
+      "n_items": 7,
+      "song_eval": {
+        "expected": null,
+        "best_match": null,
+        "exact": null,
+        "fuzzy": null
+      }
+    },
+    {
+      "file": "プレイ画面前ロード画面\\Screenshot 2026-05-18 12-23-34.png",
+      "screen": "プレイ画面前ロード画面",
+      "elapsed_sec": 0.203,
+      "n_items": 13,
+      "song_eval": {
+        "expected": null,
+        "best_match": null,
+        "exact": null,
+        "fuzzy": null
+      }
+    },
+    {
+      "file": "プレイ画面前ロード画面\\Screenshot 2026-05-18 12-25-24.png",
+      "screen": "プレイ画面前ロード画面",
+      "elapsed_sec": 0.195,
+      "n_items": 13,
+      "song_eval": {
+        "expected": null,
+        "best_match": null,
+        "exact": null,
+        "fuzzy": null
+      }
+    },
+    {
+      "file": "リザルト画面\\Screenshot 2026-05-18 12-20-06.png",
+      "screen": "リザルト画面",
+      "elapsed_sec": 0.358,
+      "n_items": 35,
+      "song_eval": {
+        "expected": "ぽぽぽかレトロード",
+        "best_match": "エトロード",
+        "exact": false,
+        "fuzzy": 88.88888888888889
+      }
+    },
+    {
+      "file": "リザルト画面\\Screenshot 2026-05-18 12-22-44.png",
+      "screen": "リザルト画面",
+      "elapsed_sec": 0.327,
+      "n_items": 33,
+      "song_eval": {
+        "expected": "ぽぽぽかレトロード",
+        "best_match": "エトロード",
+        "exact": false,
+        "fuzzy": 88.88888888888889
+      }
+    },
+    {
+      "file": "リザルト画面\\Screenshot 2026-05-18 12-23-54.png",
+      "screen": "リザルト画面",
+      "elapsed_sec": 0.326,
+      "n_items": 30,
+      "song_eval": {
+        "expected": "ぽぽぽかレトロード",
+        "best_match": "エトロード",
+        "exact": false,
+        "fuzzy": 88.88888888888889
+      }
+    },
+    {
+      "file": "リザルト画面\\Screenshot 2026-05-18 12-27-48.png",
+      "screen": "リザルト画面",
+      "elapsed_sec": 0.243,
+      "n_items": 19,
+      "song_eval": {
+        "expected": "漆黒のスペシャルプリンセスサンデー",
+        "best_match": "黒の",
+        "exact": false,
+        "fuzzy": 100.0
+      }
+    },
+    {
+      "file": "リザルト画面\\Screenshot 2026-05-18 12-27-52.png",
+      "screen": "リザルト画面",
+      "elapsed_sec": 0.379,
+      "n_items": 22,
+      "song_eval": {
+        "expected": "漆黒のスペシャルプリンセスサンデー",
+        "best_match": "漆黒の",
+        "exact": false,
+        "fuzzy": 100.0
+      }
+    },
+    {
+      "file": "リザルト画面\\Screenshot 2026-05-18 12-28-30.png",
+      "screen": "リザルト画面",
+      "elapsed_sec": 0.321,
+      "n_items": 30,
+      "song_eval": {
+        "expected": "漆黒のスペシャルプリンセスサンデー",
+        "best_match": "漆黒の",
+        "exact": false,
+        "fuzzy": 100.0
+      }
+    },
+    {
+      "file": "準備画面\\Screenshot 2026-05-18 12-17-03.png",
+      "screen": "準備画面",
+      "elapsed_sec": 0.405,
+      "n_items": 40,
+      "song_eval": {
+        "expected": null,
+        "best_match": null,
+        "exact": null,
+        "fuzzy": null
+      }
+    },
+    {
+      "file": "準備画面\\Screenshot 2026-05-18 12-28-59.png",
+      "screen": "準備画面",
+      "elapsed_sec": 0.37,
+      "n_items": 39,
+      "song_eval": {
+        "expected": null,
+        "best_match": null,
+        "exact": null,
+        "fuzzy": null
+      }
+    },
+    {
+      "file": "準備画面前ロード画面\\Screenshot 2026-05-18 12-16-59.png",
+      "screen": "準備画面前ロード画面",
+      "elapsed_sec": 0.079,
+      "n_items": 4,
+      "song_eval": {
+        "expected": null,
+        "best_match": null,
+        "exact": null,
+        "fuzzy": null
+      }
+    },
+    {
+      "file": "準備画面前ロード画面\\Screenshot 2026-05-18 12-25-14.png",
+      "screen": "準備画面前ロード画面",
+      "elapsed_sec": 0.15,
+      "n_items": 7,
+      "song_eval": {
+        "expected": null,
+        "best_match": null,
+        "exact": null,
+        "fuzzy": null
+      }
+    },
+    {
+      "file": "準備画面前ロード画面\\Screenshot 2026-05-18 12-28-52.png",
+      "screen": "準備画面前ロード画面",
+      "elapsed_sec": 0.1,
+      "n_items": 6,
+      "song_eval": {
+        "expected": null,
+        "best_match": null,
+        "exact": null,
+        "fuzzy": null
+      }
+    },
+    {
+      "file": "準備画面前ロード画面\\Screenshot 2026-05-18 12-28-54.png",
+      "screen": "準備画面前ロード画面",
+      "elapsed_sec": 0.1,
+      "n_items": 7,
+      "song_eval": {
+        "expected": null,
+        "best_match": null,
+        "exact": null,
+        "fuzzy": null
+      }
+    },
+    {
+      "file": "選曲画面\\Screenshot 2026-05-18 12-14-34.png",
+      "screen": "選曲画面",
+      "elapsed_sec": 0.695,
+      "n_items": 86,
+      "song_eval": {
+        "expected": null,
+        "best_match": null,
+        "exact": null,
+        "fuzzy": null
+      }
+    },
+    {
+      "file": "選曲画面\\Screenshot 2026-05-18 12-15-02.png",
+      "screen": "選曲画面",
+      "elapsed_sec": 0.887,
+      "n_items": 85,
+      "song_eval": {
+        "expected": null,
+        "best_match": null,
+        "exact": null,
+        "fuzzy": null
+      }
+    },
+    {
+      "file": "選曲画面\\Screenshot 2026-05-18 12-15-09.png",
+      "screen": "選曲画面",
+      "elapsed_sec": 0.957,
+      "n_items": 86,
+      "song_eval": {
+        "expected": null,
+        "best_match": null,
+        "exact": null,
+        "fuzzy": null
+      }
+    },
+    {
+      "file": "選曲画面\\Screenshot 2026-05-18 12-15-15.png",
+      "screen": "選曲画面",
+      "elapsed_sec": 0.854,
+      "n_items": 80,
+      "song_eval": {
+        "expected": null,
+        "best_match": null,
+        "exact": null,
+        "fuzzy": null
+      }
+    },
+    {
+      "file": "選曲画面\\Screenshot 2026-05-18 12-15-19.png",
+      "screen": "選曲画面",
+      "elapsed_sec": 0.846,
+      "n_items": 82,
+      "song_eval": {
+        "expected": null,
+        "best_match": null,
+        "exact": null,
+        "fuzzy": null
+      }
+    },
+    {
+      "file": "選曲画面\\Screenshot 2026-05-18 12-16-07.png",
+      "screen": "選曲画面",
+      "elapsed_sec": 0.788,
+      "n_items": 80,
+      "song_eval": {
+        "expected": null,
+        "best_match": null,
+        "exact": null,
+        "fuzzy": null
+      }
+    },
+    {
+      "file": "選曲画面\\Screenshot 2026-05-18 12-16-11.png",
+      "screen": "選曲画面",
+      "elapsed_sec": 0.911,
+      "n_items": 81,
+      "song_eval": {
+        "expected": null,
+        "best_match": null,
+        "exact": null,
+        "fuzzy": null
+      }
+    },
+    {
+      "file": "選曲画面\\Screenshot 2026-05-18 12-16-15.png",
+      "screen": "選曲画面",
+      "elapsed_sec": 0.888,
+      "n_items": 84,
+      "song_eval": {
+        "expected": null,
+        "best_match": null,
+        "exact": null,
+        "fuzzy": null
+      }
+    },
+    {
+      "file": "選曲画面\\Screenshot 2026-05-18 12-16-18.png",
+      "screen": "選曲画面",
+      "elapsed_sec": 0.836,
+      "n_items": 76,
+      "song_eval": {
+        "expected": null,
+        "best_match": null,
+        "exact": null,
+        "fuzzy": null
+      }
+    },
+    {
+      "file": "選曲画面\\Screenshot 2026-05-18 12-16-25.png",
+      "screen": "選曲画面",
+      "elapsed_sec": 0.815,
+      "n_items": 74,
+      "song_eval": {
+        "expected": null,
+        "best_match": null,
+        "exact": null,
+        "fuzzy": null
+      }
+    },
+    {
+      "file": "選曲画面\\Screenshot 2026-05-18 12-16-31.png",
+      "screen": "選曲画面",
+      "elapsed_sec": 0.806,
+      "n_items": 85,
+      "song_eval": {
+        "expected": null,
+        "best_match": null,
+        "exact": null,
+        "fuzzy": null
+      }
+    },
+    {
+      "file": "選曲画面\\Screenshot 2026-05-18 12-16-34.png",
+      "screen": "選曲画面",
+      "elapsed_sec": 0.942,
+      "n_items": 80,
+      "song_eval": {
+        "expected": null,
+        "best_match": null,
+        "exact": null,
+        "fuzzy": null
+      }
+    },
+    {
+      "file": "選曲画面\\Screenshot 2026-05-18 12-16-37.png",
+      "screen": "選曲画面",
+      "elapsed_sec": 0.716,
+      "n_items": 87,
+      "song_eval": {
+        "expected": null,
+        "best_match": null,
+        "exact": null,
+        "fuzzy": null
+      }
+    }
+  ]
+}

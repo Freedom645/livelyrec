@@ -1,0 +1,57 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+.eggs/
+build/
+dist/
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# Editors / IDE
+.vscode/
+.idea/
+*.swp
+.DS_Store
+Thumbs.db
+
+# Test / lint caches
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+htmlcov/
+.coverage
+
+# LivelyRec runtime data (portable layout)
+livelyrec_data/
+
+# PoC artifacts (大きい)
+poc/results/raw/
+poc/results/roi_crops/
+poc/results/digit_recognition/
+
+# PaddleOCR モデルキャッシュ
+.paddleocr/
+.paddlex/
+
+# Local config / secrets
+*.local
+.env
+
+# PyInstaller 出力（カスタム名）
+dist*/
+
+# Claude Code のローカル設定
+.claude/settings.local.json
+
+# 開発時の診断・モンタージュ画像（scripts/ から再生成可能）
+debug_bad_*.png
+
+# テスト用 KONAMI 画面キャプチャ＋診断画像。公開リポジトリには含めず、
+# 正解 CSV のみ追跡する（NFR-LEGAL-001）
+tests/fixtures/sample/*
+!tests/fixtures/sample/_ground_truth.csv

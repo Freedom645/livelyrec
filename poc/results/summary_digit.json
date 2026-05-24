@@ -1,0 +1,250 @@
+{
+  "approach": "color_mask_preprocessing + PaddleOCR",
+  "n_judgments_total": 24,
+  "n_evaluable": 2,
+  "n_correct": 0,
+  "accuracy": 0.0,
+  "avg_elapsed_per_judge_sec": 0.031095833333333333,
+  "rows": [
+    {
+      "file": "Screenshot 2026-05-18 12-20-06.png",
+      "judge": "cool",
+      "expected": null,
+      "ocr_raw": "8８4",
+      "ocr_digits": "884",
+      "elapsed_sec": 0.1623,
+      "correct": false,
+      "comparable": false
+    },
+    {
+      "file": "Screenshot 2026-05-18 12-20-06.png",
+      "judge": "great",
+      "expected": "218",
+      "ocr_raw": "＆Ｉ８",
+      "ocr_digits": "8",
+      "elapsed_sec": 0.0267,
+      "correct": false,
+      "comparable": true
+    },
+    {
+      "file": "Screenshot 2026-05-18 12-20-06.png",
+      "judge": "good",
+      "expected": null,
+      "ocr_raw": "",
+      "ocr_digits": "",
+      "elapsed_sec": 0.217,
+      "correct": false,
+      "comparable": false
+    },
+    {
+      "file": "Screenshot 2026-05-18 12-20-06.png",
+      "judge": "bad",
+      "expected": "100",
+      "ocr_raw": "",
+      "ocr_digits": "",
+      "elapsed_sec": 0.0246,
+      "correct": false,
+      "comparable": true
+    },
+    {
+      "file": "Screenshot 2026-05-18 12-22-44.png",
+      "judge": "cool",
+      "expected": null,
+      "ocr_raw": "ｚｓ８",
+      "ocr_digits": "58",
+      "elapsed_sec": 0.0212,
+      "correct": false,
+      "comparable": false
+    },
+    {
+      "file": "Screenshot 2026-05-18 12-22-44.png",
+      "judge": "great",
+      "expected": null,
+      "ocr_raw": "＆ｓＧ",
+      "ocr_digits": "5",
+      "elapsed_sec": 0.0222,
+      "correct": false,
+      "comparable": false
+    },
+    {
+      "file": "Screenshot 2026-05-18 12-22-44.png",
+      "judge": "good",
+      "expected": null,
+      "ocr_raw": "８８",
+      "ocr_digits": "88",
+      "elapsed_sec": 0.0224,
+      "correct": false,
+      "comparable": false
+    },
+    {
+      "file": "Screenshot 2026-05-18 12-22-44.png",
+      "judge": "bad",
+      "expected": null,
+      "ocr_raw": "",
+      "ocr_digits": "",
+      "elapsed_sec": 0.0096,
+      "correct": false,
+      "comparable": false
+    },
+    {
+      "file": "Screenshot 2026-05-18 12-23-54.png",
+      "judge": "cool",
+      "expected": null,
+      "ocr_raw": "0",
+      "ocr_digits": "0",
+      "elapsed_sec": 0.0214,
+      "correct": false,
+      "comparable": false
+    },
+    {
+      "file": "Screenshot 2026-05-18 12-23-54.png",
+      "judge": "great",
+      "expected": null,
+      "ocr_raw": "0",
+      "ocr_digits": "0",
+      "elapsed_sec": 0.022,
+      "correct": false,
+      "comparable": false
+    },
+    {
+      "file": "Screenshot 2026-05-18 12-23-54.png",
+      "judge": "good",
+      "expected": null,
+      "ocr_raw": "0",
+      "ocr_digits": "0",
+      "elapsed_sec": 0.0204,
+      "correct": false,
+      "comparable": false
+    },
+    {
+      "file": "Screenshot 2026-05-18 12-23-54.png",
+      "judge": "bad",
+      "expected": null,
+      "ocr_raw": "",
+      "ocr_digits": "",
+      "elapsed_sec": 0.0084,
+      "correct": false,
+      "comparable": false
+    },
+    {
+      "file": "Screenshot 2026-05-18 12-27-48.png",
+      "judge": "cool",
+      "expected": null,
+      "ocr_raw": "",
+      "ocr_digits": "",
+      "elapsed_sec": 0.0113,
+      "correct": false,
+      "comparable": false
+    },
+    {
+      "file": "Screenshot 2026-05-18 12-27-48.png",
+      "judge": "great",
+      "expected": null,
+      "ocr_raw": "",
+      "ocr_digits": "",
+      "elapsed_sec": 0.0098,
+      "correct": false,
+      "comparable": false
+    },
+    {
+      "file": "Screenshot 2026-05-18 12-27-48.png",
+      "judge": "good",
+      "expected": null,
+      "ocr_raw": "",
+      "ocr_digits": "",
+      "elapsed_sec": 0.0081,
+      "correct": false,
+      "comparable": false
+    },
+    {
+      "file": "Screenshot 2026-05-18 12-27-48.png",
+      "judge": "bad",
+      "expected": null,
+      "ocr_raw": "",
+      "ocr_digits": "",
+      "elapsed_sec": 0.0084,
+      "correct": false,
+      "comparable": false
+    },
+    {
+      "file": "Screenshot 2026-05-18 12-27-52.png",
+      "judge": "cool",
+      "expected": null,
+      "ocr_raw": "",
+      "ocr_digits": "",
+      "elapsed_sec": 0.009,
+      "correct": false,
+      "comparable": false
+    },
+    {
+      "file": "Screenshot 2026-05-18 12-27-52.png",
+      "judge": "great",
+      "expected": null,
+      "ocr_raw": "118",
+      "ocr_digits": "118",
+      "elapsed_sec": 0.0221,
+      "correct": false,
+      "comparable": false
+    },
+    {
+      "file": "Screenshot 2026-05-18 12-27-52.png",
+      "judge": "good",
+      "expected": null,
+      "ocr_raw": "",
+      "ocr_digits": "",
+      "elapsed_sec": 0.0098,
+      "correct": false,
+      "comparable": false
+    },
+    {
+      "file": "Screenshot 2026-05-18 12-27-52.png",
+      "judge": "bad",
+      "expected": null,
+      "ocr_raw": "",
+      "ocr_digits": "",
+      "elapsed_sec": 0.009,
+      "correct": false,
+      "comparable": false
+    },
+    {
+      "file": "Screenshot 2026-05-18 12-28-30.png",
+      "judge": "cool",
+      "expected": null,
+      "ocr_raw": "0",
+      "ocr_digits": "0",
+      "elapsed_sec": 0.0228,
+      "correct": false,
+      "comparable": false
+    },
+    {
+      "file": "Screenshot 2026-05-18 12-28-30.png",
+      "judge": "great",
+      "expected": null,
+      "ocr_raw": "0",
+      "ocr_digits": "0",
+      "elapsed_sec": 0.0234,
+      "correct": false,
+      "comparable": false
+    },
+    {
+      "file": "Screenshot 2026-05-18 12-28-30.png",
+      "judge": "good",
+      "expected": null,
+      "ocr_raw": "0",
+      "ocr_digits": "0",
+      "elapsed_sec": 0.0255,
+      "correct": false,
+      "comparable": false
+    },
+    {
+      "file": "Screenshot 2026-05-18 12-28-30.png",
+      "judge": "bad",
+      "expected": null,
+      "ocr_raw": "",
+      "ocr_digits": "",
+      "elapsed_sec": 0.0089,
+      "correct": false,
+      "comparable": false
+    }
+  ]
+}

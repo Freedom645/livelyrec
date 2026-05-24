@@ -1,0 +1,75 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "livelyrec"
+version = "0.1.0"
+description = "pop'n music lively スコア記録・配信支援スタンドアロンアプリ"
+readme = "README.md"
+requires-python = ">=3.11,<3.12"
+authors = [{ name = "LivelyRec" }]
+license = { text = "MIT" }
+dependencies = [
+    "paddlepaddle==2.6.2",
+    "paddleocr==2.7.3",
+    "numpy<2",
+    "opencv-python-headless<4.10",
+    "Pillow",
+    "PySide6>=6.7",
+    "obs-websocket-py>=1.0",
+    "websockets>=12",
+    "rapidfuzz>=3.5",
+    "requests>=2.31",
+    "PyYAML>=6.0",
+    "jaconv>=0.3",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0",
+    "pytest-qt>=4.4",
+    "pytest-cov>=5.0",
+    "ruff>=0.4",
+    "mypy>=1.10",
+    "pyinstaller>=6.5",
+]
+
+[project.scripts]
+livelyrec = "livelyrec.app:main"
+
+[tool.setuptools.packages.find]
+include = ["livelyrec*"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B", "UP", "SIM", "TID"]
+# E501: 長い行（line-length=100 内に収まらない docstring を許容）
+# UP042: str+Enum を StrEnum へ移行推奨。Python 3.11 StrEnum との str 互換確認後に対応予定
+# SIM105: try/except/pass → contextlib.suppress 推奨。可読性は同等のため一旦許容
+ignore = ["E501", "UP042", "SIM105"]
+
+# 依存方向の Lint:
+# ruff の banned-api はモジュール単位での絞り込みができないため、
+# 「domain 層は他層に依存しない」ことは per-file-ignores と
+# 専用テスト（tests/test_layer_dependencies.py）で担保する。
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = ["E402", "B011"]
+
+[tool.mypy]
+python_version = "3.11"
+strict = false
+warn_unused_ignores = true
+disallow_untyped_defs = false
+ignore_missing_imports = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-ra -q"
+markers = [
+    "integration: 結合テスト（実スレッド・実イベントループ・実ソケットを使用）",
+]

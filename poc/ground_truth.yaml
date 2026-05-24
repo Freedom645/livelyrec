@@ -1,0 +1,117 @@
+# Ground Truth for OCR PoC
+#
+# 目視によるベストエフォート読み取り。
+# - song_name は black-bg/white-text の上部バーから読み取り（確度高）
+# - 数値（score, judges, combo）は装飾フォントのためコメントに「確信度」記載
+# - 不明なものは null 値とし、評価対象から除外する
+#
+# 評価対象:
+#   PaddleOCR が返したテキストの中に、ground truth の値が含まれるかを判定する。
+#   楽曲名は exact match と 文字列類似度 (rapidfuzz partial_ratio) の両方を見る。
+#   数字はそのまま含まれていれば OK。
+
+play_screen:
+  - file: "Screenshot 2026-05-18 12-17-43.png"
+    song_name: "ぽぽぽかレトロード"
+    score: null      # 表示なし or 読み取り不能
+    combo: null
+  - file: "Screenshot 2026-05-18 12-18-04.png"
+    song_name: "ぽぽぽかレトロード"
+    score: null
+    combo: null
+  - file: "Screenshot 2026-05-18 12-18-40.png"
+    song_name: "ぽぽぽかレトロード"
+    score: null      # 030210付近だが装飾大
+    combo: null      # 040付近
+  - file: "Screenshot 2026-05-18 12-19-48.png"
+    song_name: "ぽぽぽかレトロード"
+    score: null
+    combo: null
+  - file: "Screenshot 2026-05-18 12-22-27.png"
+    song_name: "ぽぽぽかレトロード"
+    score: null
+    combo: null
+  - file: "Screenshot 2026-05-18 12-23-29.png"
+    song_name: "ぽぽぽかレトロード"
+    score: null
+    combo: null
+  - file: "Screenshot 2026-05-18 12-23-38.png"
+    song_name: "ぽぽぽかレトロード"
+    score: null
+    combo: null
+  - file: "Screenshot 2026-05-18 12-25-29.png"
+    song_name: "漆黒のスペシャルプリンセスサンデー"
+    sub_state: "Are you ready"
+    score: null
+    combo: null
+  - file: "Screenshot 2026-05-18 12-27-38.png"
+    song_name: "漆黒のスペシャルプリンセスサンデー"
+    score: null
+    combo: null
+  - file: "Screenshot 2026-05-18 12-29-56.png"
+    song_name: "漆黒のスペシャルプリンセスサンデー"
+    sub_state: "Are you ready"
+    score: null
+    combo: null
+  - file: "Screenshot 2026-05-18 12-32-03.png"
+    song_name: "漆黒のスペシャルプリンセスサンデー"
+    score: null
+    combo: null
+
+result_screen:
+  - file: "Screenshot 2026-05-18 12-20-06.png"
+    song_name: "ぽぽぽかレトロード"
+    clear_type: "FAILED"
+    score: null
+    cool: null
+    great: null
+    good: null
+    bad: null
+    combo: null
+  - file: "Screenshot 2026-05-18 12-22-44.png"
+    song_name: "ぽぽぽかレトロード"
+    clear_type: "CLEAR"
+    score: null
+    cool: null
+    great: null
+    good: null
+    bad: null
+    combo: null
+  - file: "Screenshot 2026-05-18 12-23-54.png"
+    song_name: "ぽぽぽかレトロード"
+    clear_type: "FAILED"  # 部分ロード状態
+    score: null
+    cool: null
+    great: null
+    good: null
+    bad: null
+    combo: null
+  - file: "Screenshot 2026-05-18 12-27-48.png"
+    song_name: "漆黒のスペシャルプリンセスサンデー"
+    clear_type: null   # 通信中表示
+    score: null
+    cool: null
+    great: null
+    good: null
+    bad: null
+    combo: null
+  - file: "Screenshot 2026-05-18 12-27-52.png"
+    song_name: "漆黒のスペシャルプリンセスサンデー"
+    clear_type: "CLEAR"
+    score: null
+    cool: null
+    great: null
+    good: null
+    bad: null
+    combo: null
+  - file: "Screenshot 2026-05-18 12-28-30.png"
+    song_name: "漆黒のスペシャルプリンセスサンデー"
+    clear_type: "FAILED"
+    score: null
+    cool: null
+    great: null
+    good: null
+    bad: null
+    combo: null
+
+# 数値Ground Truthは PoC 実行後、PaddleOCR の出力を見ながらユーザレビューで確定する想定
