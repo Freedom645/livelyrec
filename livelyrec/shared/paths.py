@@ -15,9 +15,16 @@ from .exceptions import DataFolderNotWritableError
 
 @dataclass(frozen=True)
 class AppPaths:
-    """配布フォルダ直下に展開される全パスを集約。"""
+    """配布フォルダに展開される全パスを集約。
+
+    - `root` は exe の隣（書き込み可能な配布ルート）。ユーザデータ（`livelyrec_data/`）の親。
+    - `bundle_dir` は配布リソース（templates・browser_source・data/master.json）の親。
+      PyInstaller の onedir モードでは `sys._MEIPASS`（`root/_internal/`）を指し、
+      開発時は `root` と同一（リポジトリルート）。
+    """
 
     root: Path
+    bundle_dir: Path
     data_dir: Path
     settings_file: Path
     db_file: Path
@@ -34,8 +41,12 @@ class AppPaths:
         """PyInstaller 配下なら exe の隣、開発時はリポジトリルートを基準にする。"""
         if getattr(sys, "frozen", False):
             root = Path(sys.executable).resolve().parent
+            # PyInstaller 6 の onedir では sys._MEIPASS は `root/_internal/`。
+            # 配布同梱の datas（templates/browser_source/data）はそこに展開される。
+            bundle = Path(getattr(sys, "_MEIPASS", root))
         else:
             root = _find_repo_root(Path(__file__).resolve())
+            bundle = root
 
         data = root / DATA_DIR_NAME
         data.mkdir(exist_ok=True)
@@ -44,6 +55,7 @@ class AppPaths:
 
         return cls(
             root=root,
+            bundle_dir=bundle,
             data_dir=data,
             settings_file=data / "settings.json",
             db_file=data / "db" / "livelyrec.sqlite3",
@@ -51,9 +63,9 @@ class AppPaths:
             export_dir=data / "export",
             crash_dir=data / "crash",
             debug_dir=data / "debug",
-            templates_dir=root / "templates",
-            browser_source_dir=root / "browser_source",
-            master_seed_file=root / "data" / "master.json",
+            templates_dir=bundle / "templates",
+            browser_source_dir=bundle / "browser_source",
+            master_seed_file=bundle / "data" / "master.json",
         )
 
 

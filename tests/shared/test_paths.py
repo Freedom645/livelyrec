@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import sys
 from pathlib import Path
 
 import pytest
@@ -10,10 +11,14 @@ from livelyrec.shared.exceptions import DataFolderNotWritableError
 from livelyrec.shared.paths import AppPaths, _find_repo_root, ensure_data_folder_writable
 
 
-def _make_paths(base: Path, data_dir: Path | None = None) -> AppPaths:
+def _make_paths(
+    base: Path, data_dir: Path | None = None, bundle: Path | None = None
+) -> AppPaths:
     data = data_dir if data_dir is not None else base
+    bundle_dir = bundle if bundle is not None else base
     return AppPaths(
         root=base,
+        bundle_dir=bundle_dir,
         data_dir=data,
         settings_file=data / "settings.json",
         db_file=data / "db" / "livelyrec.sqlite3",
@@ -21,9 +26,9 @@ def _make_paths(base: Path, data_dir: Path | None = None) -> AppPaths:
         export_dir=data / "export",
         crash_dir=data / "crash",
         debug_dir=data / "debug",
-        templates_dir=base / "templates",
-        browser_source_dir=base / "browser_source",
-        master_seed_file=base / "data" / "master.json",
+        templates_dir=bundle_dir / "templates",
+        browser_source_dir=bundle_dir / "browser_source",
+        master_seed_file=bundle_dir / "data" / "master.json",
     )
 
 
@@ -38,8 +43,39 @@ def test_detect_returns_structured_paths() -> None:
     # パス組み立ての整合
     assert paths.data_dir.parent == paths.root
     assert paths.settings_file == paths.data_dir / "settings.json"
-    assert paths.templates_dir == paths.root / "templates"
-    assert paths.browser_source_dir == paths.root / "browser_source"
+    # 開発時は bundle_dir == root（リポジトリルート）
+    assert paths.bundle_dir == paths.root
+    assert paths.templates_dir == paths.bundle_dir / "templates"
+    assert paths.browser_source_dir == paths.bundle_dir / "browser_source"
+    assert paths.master_seed_file == paths.bundle_dir / "data" / "master.json"
+
+
+def test_detect_frozen_resolves_bundle_from_meipass(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    """PyInstaller frozen 時、bundle_dir は sys._MEIPASS（_internal）を指し、
+    root（exe の隣）と分離されること。
+    """
+    exe_dir = tmp_path / "LivelyRec"
+    exe_dir.mkdir()
+    fake_exe = exe_dir / "LivelyRec.exe"
+    fake_exe.write_bytes(b"")
+    meipass = exe_dir / "_internal"
+    meipass.mkdir()
+
+    monkeypatch.setattr(sys, "frozen", True, raising=False)
+    monkeypatch.setattr(sys, "executable", str(fake_exe))
+    monkeypatch.setattr(sys, "_MEIPASS", str(meipass), raising=False)
+
+    paths = AppPaths.detect()
+
+    assert paths.root == exe_dir
+    assert paths.bundle_dir == meipass
+    assert paths.templates_dir == meipass / "templates"
+    assert paths.browser_source_dir == meipass / "browser_source"
+    assert paths.master_seed_file == meipass / "data" / "master.json"
+    # ユーザデータは exe の隣（書込み可能側）
+    assert paths.data_dir == exe_dir / "livelyrec_data"
 
 
 def test_find_repo_root_locates_pyproject(tmp_path: Path) -> None:

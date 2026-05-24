@@ -6,6 +6,7 @@
 from __future__ import annotations
 
 import logging
+import os
 import sys
 import traceback
 from datetime import datetime
@@ -13,6 +14,17 @@ from datetime import datetime
 from livelyrec.shared.exceptions import DataFolderNotWritableError
 from livelyrec.shared.logging_setup import setup_logging
 from livelyrec.shared.paths import AppPaths, ensure_data_folder_writable
+
+
+def _ensure_std_streams() -> None:
+    """PyInstaller --windowed ビルドでは sys.stdout / sys.stderr が None になり、
+    PaddleOCR の `maybe_download` から呼ばれる tqdm 等が `.write` で AttributeError
+    を起こして OCR 初期化が失敗する。os.devnull で書き込みを吸収する。
+    """
+    if sys.stdout is None:
+        sys.stdout = open(os.devnull, "w", encoding="utf-8")  # noqa: SIM115
+    if sys.stderr is None:
+        sys.stderr = open(os.devnull, "w", encoding="utf-8")  # noqa: SIM115
 
 
 def _show_data_folder_error(paths: AppPaths, message: str) -> None:
@@ -54,6 +66,7 @@ def _install_excepthook(paths: AppPaths) -> None:
 
 
 def main() -> int:
+    _ensure_std_streams()
     paths = AppPaths.detect()
     try:
         ensure_data_folder_writable(paths)

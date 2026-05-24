@@ -161,3 +161,39 @@ def test_disconnect_is_idempotent_and_safe() -> None:
 
 def test_source_name_property() -> None:
     assert OBSClient(ObsConfig(source_name="my-source")).source_name == "my-source"
+
+
+# ---- connect() が obsws に legacy=False を明示すること（I-021）----
+
+class _ObswsSpy:
+    """obsws をフェイクし、コンストラクタに渡された kwargs を記録する。"""
+
+    last_kwargs: dict | None = None
+
+    def __init__(self, **kwargs) -> None:
+        type(self).last_kwargs = kwargs
+
+    def connect(self) -> None:
+        return None
+
+    def disconnect(self) -> None:
+        return None
+
+
+@pytest.mark.parametrize("port", [4444, 4455, 4456])
+def test_connect_forces_legacy_false_regardless_of_port(
+    monkeypatch: pytest.MonkeyPatch, port: int
+) -> None:
+    """obs-websocket-py は port==4444 で暗黙的に legacy=True（v4）に切り替える。
+    LivelyRec は v5 onlyサポートなので、ポートに関わらず legacy=False を明示する。
+    """
+    _ObswsSpy.last_kwargs = None
+    monkeypatch.setattr(
+        "livelyrec.infrastructure.obs_client.obsws", _ObswsSpy
+    )
+
+    OBSClient(ObsConfig(host="127.0.0.1", port=port, password="pw")).connect()
+
+    assert _ObswsSpy.last_kwargs is not None
+    assert _ObswsSpy.last_kwargs.get("legacy") is False
+    assert _ObswsSpy.last_kwargs.get("port") == port

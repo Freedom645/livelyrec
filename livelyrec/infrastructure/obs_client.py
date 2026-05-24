@@ -77,12 +77,22 @@ class OBSClient:
     # ---- 接続ライフサイクル ----
 
     def connect(self) -> None:
-        """OBS へ接続する。失敗時は分類した例外を送出する。"""
+        """OBS へ接続する。失敗時は分類した例外を送出する。
+
+        `legacy=False` を明示する理由:
+        obs-websocket-py は `legacy=None`（既定）かつ `port==4444` の場合、
+        暗黙的に `legacy=True`（v4 プロトコル）へ切り替える内部実装を持つ
+        (`obswebsocket.core.obsws.__init__`)。LivelyRec は OBS Studio 28 以降の
+        WebSocket v5 のみサポートする（NFR-PORT-002）ため、ユーザが過去の
+        v4 既定ポート 4444 を設定していても v5 ハンドシェイクを行うよう固定する。
+        固定しないと "Invalid initial response" でハンドシェイクに失敗する。
+        """
         try:
             ws = obsws(
                 host=self._cfg.host,
                 port=self._cfg.port,
                 password=self._cfg.password or "",
+                legacy=False,
                 timeout=_TIMEOUT,
             )
             ws.connect()
