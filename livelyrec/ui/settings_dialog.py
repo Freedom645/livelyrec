@@ -136,11 +136,15 @@ class SettingsDialog(QDialog):
 
     # ---- 記録タブ ----
     def _build_recording_tab(self) -> QWidget:
+        from livelyrec.shared.constants import MAX_FPS
         w = QWidget()
         layout = QFormLayout(w)
         self._fps = QSpinBox()
-        self._fps.setRange(1, 30)
-        self._fps.setValue(self._settings.recording.fps)
+        # 0.5 秒間隔（2 fps）で認識・配信支援とも追従に十分なため、
+        # CPU/GPU 負荷と OBS スクリーンショット I/O を抑える目的で上限を
+        # MAX_FPS に制限（I-025 対応・PO 判断 2026-05-24）。
+        self._fps.setRange(1, MAX_FPS)
+        self._fps.setValue(min(self._settings.recording.fps, MAX_FPS))
         self._rollover = QSpinBox()
         self._rollover.setRange(0, 23)
         self._rollover.setValue(self._settings.recording.business_day_rollover_hour)

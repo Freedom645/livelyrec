@@ -109,17 +109,21 @@ class RecordingService:
         result_repo: ResultRepository,
         daily_repo: DailyCounterRepository,
         rollover_hour: int = 6,
-        fps: int = 8,
+        fps: int = 2,
         debug_dir: Path | None = None,
         debug_capture: bool = False,
     ) -> None:
+        # constants モジュール経由で参照し、テストで MAX_FPS を monkeypatch
+        # 可能にする（録画ループの結合テストで擬似的に fps を上げるため）。
+        from livelyrec.shared import constants as _const
         self._obs = obs
         self._analysis = analysis
         self._sessions = session_repo
         self._results = result_repo
         self._daily = daily_repo
         self._rollover_hour = rollover_hour
-        self._fps = max(1, fps)
+        # 上限を MAX_FPS で抑制（I-025 対応。設定で大きな値が来ても上限で頭打ち）。
+        self._fps = max(1, min(fps, _const.MAX_FPS))
         # 記録中フレームの保存先（ROI 校正用）と、その ON/OFF。
         # ON/OFF は set_debug_capture で実行中に切り替えられる。
         self._debug_dir = debug_dir

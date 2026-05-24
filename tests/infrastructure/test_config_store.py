@@ -41,7 +41,7 @@ def test_load_partial_json_merges_defaults(tmp_path: Path) -> None:
     settings = ConfigStore(p).load()
     assert settings.obs.host == "127.0.0.1"
     assert settings.obs.port == 4455  # default
-    assert settings.recording.fps == 8  # default
+    assert settings.recording.fps == 2  # default (I-025 で 8→2 に再評価)
 
 
 def test_load_invalid_json_raises(tmp_path: Path) -> None:

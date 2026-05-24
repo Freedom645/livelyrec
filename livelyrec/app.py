@@ -14,6 +14,7 @@ import traceback
 from datetime import datetime
 from pathlib import Path
 
+from livelyrec.shared.diagnostics import MemoryMonitor
 from livelyrec.shared.exceptions import DataFolderNotWritableError
 from livelyrec.shared.logging_setup import setup_logging
 from livelyrec.shared.paths import AppPaths, ensure_data_folder_writable
@@ -308,6 +309,11 @@ def main() -> int:
 
     ws.start()
 
+    # メモリ使用量の定期ロギングを開始（I-024/I-025 の手がかり収集）。
+    # 60 秒ごとに自プロセス RSS / システム空きメモリを INFO ログへ。
+    mem_monitor = MemoryMonitor(interval_sec=60.0)
+    mem_monitor.start()
+
     # UI 起動
     from PySide6.QtWidgets import QApplication
 
@@ -337,6 +343,7 @@ def main() -> int:
     try:
         return app.exec()
     finally:
+        mem_monitor.stop()
         ws.stop()
         try:
             conn.close()
