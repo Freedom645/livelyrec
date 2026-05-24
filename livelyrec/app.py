@@ -5,26 +5,98 @@
 
 from __future__ import annotations
 
+import faulthandler
 import logging
 import os
 import sys
+import threading
 import traceback
 from datetime import datetime
+from pathlib import Path
 
 from livelyrec.shared.exceptions import DataFolderNotWritableError
 from livelyrec.shared.logging_setup import setup_logging
 from livelyrec.shared.paths import AppPaths, ensure_data_folder_writable
 
 
-def _ensure_std_streams() -> None:
+def _bootstrap_std_streams() -> None:
     """PyInstaller --windowed ビルドでは sys.stdout / sys.stderr が None になり、
     PaddleOCR の `maybe_download` から呼ばれる tqdm 等が `.write` で AttributeError
-    を起こして OCR 初期化が失敗する。os.devnull で書き込みを吸収する。
+    を起こす（I-020）。最低限の代替として `os.devnull` を割り当てる。
+
+    logs_dir が確定したら `_redirect_std_streams_to_file()` でファイルへ
+    再リダイレクトする（記録中クラッシュの abort メッセージ等を保存するため）。
     """
     if sys.stdout is None:
         sys.stdout = open(os.devnull, "w", encoding="utf-8")  # noqa: SIM115
     if sys.stderr is None:
         sys.stderr = open(os.devnull, "w", encoding="utf-8")  # noqa: SIM115
+
+
+def _redirect_std_streams_to_file(logs_dir: Path) -> None:
+    """`_bootstrap_std_streams()` の devnull 仮割当を、ファイル出力に差し替える。
+
+    PaddleOCR / paddle / OpenCV 等の C 拡張は stderr に直接 `fprintf` で abort
+    メッセージや warn を吐く。これらを取り逃すと、記録中の致命エラーの真因
+    （セグフォルト・アサート失敗等）が一切記録に残らない（I-024）。
+    """
+    try:
+        logs_dir.mkdir(parents=True, exist_ok=True)
+        stdout_path = logs_dir / "stdout.log"
+        stderr_path = logs_dir / "stderr.log"
+        # devnull で開いていた既存ストリームは閉じてから差し替える
+        if sys.stdout is not None and getattr(sys.stdout, "name", "") == os.devnull:
+            try:
+                sys.stdout.close()
+            except OSError:
+                pass
+            sys.stdout = open(stdout_path, "a", encoding="utf-8", buffering=1)  # noqa: SIM115
+        if sys.stderr is not None and getattr(sys.stderr, "name", "") == os.devnull:
+            try:
+                sys.stderr.close()
+            except OSError:
+                pass
+            sys.stderr = open(stderr_path, "a", encoding="utf-8", buffering=1)  # noqa: SIM115
+    except OSError:
+        # ファイル作成に失敗しても起動は継続する
+        pass
+
+
+def _install_faulthandler(logs_dir: Path) -> None:
+    """C 拡張のセグフォルト・アサート失敗をスタックトレース付きでダンプする。
+
+    `faulthandler` は SIGSEGV / SIGABRT 等を捕まえて、全スレッドの C/Python の
+    スタックを指定ファイルへ書き出す。Python 例外システムを通らないクラッシュ
+    （PaddleOCR / OpenCV のネイティブクラッシュ等）の唯一の手がかりになる。
+    """
+    try:
+        logs_dir.mkdir(parents=True, exist_ok=True)
+        fh_file = (logs_dir / "faulthandler.log").open("a", encoding="utf-8")
+        faulthandler.enable(file=fh_file, all_threads=True)
+    except OSError:
+        pass
+
+
+def _install_thread_excepthook() -> None:
+    """ワーカースレッド内の未捕捉例外を logger.critical に流す。
+
+    `sys.excepthook` はメインスレッドの未捕捉例外しか受け取らない。
+    記録ループ・WS サーバスレッド・更新チェックスレッド等で例外が起きると
+    Python 3.8+ では `threading.excepthook` 経由で stderr に出るが、UI が
+    生存しているとユーザは気付けないため明示的にログへ。
+    """
+    log = logging.getLogger("livelyrec")
+
+    def _hook(args: threading.ExceptHookArgs) -> None:
+        if args.exc_type is SystemExit:
+            return
+        log.critical(
+            "Uncaught exception in thread %s",
+            getattr(args.thread, "name", "?"),
+            exc_info=(args.exc_type, args.exc_value, args.exc_traceback),
+        )
+
+    threading.excepthook = _hook
 
 
 def _show_data_folder_error(paths: AppPaths, message: str) -> None:
@@ -66,7 +138,7 @@ def _install_excepthook(paths: AppPaths) -> None:
 
 
 def main() -> int:
-    _ensure_std_streams()
+    _bootstrap_std_streams()
     paths = AppPaths.detect()
     try:
         ensure_data_folder_writable(paths)
@@ -74,8 +146,13 @@ def main() -> int:
         _show_data_folder_error(paths, str(e))
         return 1
 
+    # logs_dir 確定後に診断系を仕込む。記録中の致命エラーの手がかりを
+    # livelyrec_data/logs/{stderr.log, faulthandler.log} および crash/ に残す。
+    _redirect_std_streams_to_file(paths.logs_dir)
+    _install_faulthandler(paths.logs_dir)
     logger = setup_logging(paths.logs_dir)
     _install_excepthook(paths)
+    _install_thread_excepthook()
     logger.info("LivelyRec starting, data_dir=%s", paths.data_dir)
 
     # 設定ロード
