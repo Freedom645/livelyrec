@@ -1,0 +1,8 @@
+title: LivelyRec
+description: pop'n music lively のスコア記録・配信支援を行うスタンドアロン Windows アプリ
+theme: jekyll-theme-cayman
+lang: ja
+
+# Jekyll に処理させないファイル
+exclude:
+  - design/poc/results/
