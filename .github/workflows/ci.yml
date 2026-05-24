@@ -8,10 +8,10 @@ on:
   workflow_dispatch:
 
 jobs:
-  test:
-    name: Lint + Test
+  light:
+    name: Lint + Light Test
     runs-on: windows-latest
-    timeout-minutes: 30
+    timeout-minutes: 10
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -22,14 +22,40 @@ jobs:
           python-version: '3.11'
           cache: 'pip'
 
-      - name: Install dependencies
+      - name: Install (without PaddleOCR)
         run: |
           python -m pip install --upgrade pip
-          pip install -r requirements.txt
-          pip install -r requirements-dev.txt
+          pip install -r requirements-light.txt
+          pip install pytest pytest-qt pytest-cov ruff
 
       - name: Ruff (lint)
         run: python -m ruff check livelyrec tests scripts
 
-      - name: Pytest
+      - name: Pytest (excluding requires_paddle)
+        run: python -m pytest -q -m "not requires_paddle"
+
+  full:
+    name: Full Test (with PaddleOCR)
+    runs-on: windows-latest
+    timeout-minutes: 30
+    # PR では PaddleOCR の重い依存解決をスキップして CI を高速化。
+    # main への push と手動実行のみフルテストを行う。
+    if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install (full)
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pytest pytest-qt pytest-cov
+
+      - name: Pytest (all tests including requires_paddle)
         run: python -m pytest -q

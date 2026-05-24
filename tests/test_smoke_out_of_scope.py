@@ -11,6 +11,8 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
+import pytest
+
 
 def test_app_module_imports() -> None:
     import livelyrec.app  # noqa: F401
@@ -42,6 +44,7 @@ def test_ws_envelope_produces_valid_json() -> None:
     assert "schema" in env
 
 
+@pytest.mark.requires_paddle
 def test_paddle_engine_constructs_without_loading_model() -> None:
     from livelyrec.infrastructure.ocr.base import OcrEngine
     from livelyrec.infrastructure.ocr.paddle import PaddleOcrEngine

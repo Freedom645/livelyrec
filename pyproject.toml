@@ -72,4 +72,5 @@ testpaths = ["tests"]
 addopts = "-ra -q"
 markers = [
     "integration: 結合テスト（実スレッド・実イベントループ・実ソケットを使用）",
+    "requires_paddle: PaddleOCR / paddlepaddle の実体が必要なテスト（軽量CIではスキップ）",
 ]
