@@ -21,13 +21,19 @@ class PlaySessionRepository:
 
     def create(
         self,
-        chart: Chart,
+        chart: Chart | None,
         started_at: datetime,
         business_date: date,
         obs_scene: str | None = None,
         obs_source: str | None = None,
         resolution: str | None = None,
+        raw_song_text: str | None = None,
     ) -> PlaySession:
+        """プレイセッションを作成する。
+
+        `chart=None` の場合は **楽曲名 OCR が特定不能だった検出失敗セッション**
+        として扱い、chart_id を NULL で保存する（FR-REC-039）。
+        """
         session = PlaySession(
             session_id=self.new_id(),
             chart=chart,
@@ -44,12 +50,12 @@ class PlaySessionRepository:
                 """
                 INSERT INTO play_session
                 (session_id, chart_id, started_at, business_date, attempt_count,
-                 final_status, obs_scene, obs_source, resolution)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                 final_status, obs_scene, obs_source, resolution, raw_song_text)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """,
                 (
                     session.session_id,
-                    chart.chart_id,
+                    chart.chart_id if chart is not None else None,
                     dt_to_iso(started_at),
                     business_date.isoformat(),
                     session.attempt_count,
@@ -57,6 +63,7 @@ class PlaySessionRepository:
                     obs_scene,
                     obs_source,
                     resolution,
+                    raw_song_text,
                 ),
             )
         return session
@@ -94,29 +101,33 @@ class PlaySessionRepository:
                 )
 
     def get(self, session_id: str) -> PlaySession | None:
+        # chart_id が NULL の検出失敗セッションも取得できるよう LEFT JOIN を使う。
         row = self._conn.execute(
             """
             SELECT ps.session_id, ps.chart_id, ps.started_at, ps.ended_at, ps.business_date,
                    ps.attempt_count, ps.final_status, ps.obs_scene, ps.obs_source, ps.resolution,
+                   ps.raw_song_text,
                    c.song_id, c.difficulty, c.is_upper, c.level,
                    s.title, s.genre
             FROM play_session ps
-            JOIN chart c ON ps.chart_id = c.chart_id
-            JOIN song s ON c.song_id = s.song_id
+            LEFT JOIN chart c ON ps.chart_id = c.chart_id
+            LEFT JOIN song s ON c.song_id = s.song_id
             WHERE ps.session_id = ?
             """,
             (session_id,),
         ).fetchone()
         if not row:
             return None
-        chart = Chart(
-            song_id=row["song_id"],
-            title=row["title"],
-            difficulty=Difficulty(row["difficulty"]),
-            is_upper=bool(row["is_upper"]),
-            genre=row["genre"],
-            level=row["level"],
-        )
+        chart: Chart | None = None
+        if row["song_id"] is not None:
+            chart = Chart(
+                song_id=row["song_id"],
+                title=row["title"],
+                difficulty=Difficulty(row["difficulty"]),
+                is_upper=bool(row["is_upper"]),
+                genre=row["genre"],
+                level=row["level"],
+            )
         retries_rows = self._conn.execute(
             "SELECT occurred_at FROM retry WHERE session_id = ? ORDER BY occurred_at",
             (session_id,),

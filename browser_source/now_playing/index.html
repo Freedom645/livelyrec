@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <title>LivelyRec - 現在のプレイ楽曲</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" id="custom-theme" href="">
+</head>
+<body>
+  <div class="livelyrec-now-playing" data-lr="root" data-lr-source="now-playing"
+       data-lr-detection="ok">
+    <h3 data-lr="display-title">—</h3>
+    <p class="livelyrec-meta">
+      <span class="livelyrec-difficulty" data-lr="difficulty">—</span>
+      <span class="livelyrec-level" data-lr="level"></span>
+    </p>
+    <p class="livelyrec-genre" data-lr="genre"></p>
+    <p class="livelyrec-status"><span data-lr="ws-status">未接続</span></p>
+  </div>
+  <script src="../common.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

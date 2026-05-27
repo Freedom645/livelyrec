@@ -57,9 +57,8 @@ class ExportService:
         if options is None:
             options = CsvOptions()
         out_path.parent.mkdir(parents=True, exist_ok=True)
-        # 大量データに備えて全件取得は避け、list_recent を大きめに取り出す
-        # 実プロダクションでは date 範囲 SQL を追加実装したいが、本実装はシンプルに
-        recent = self._results.list_recent(limit=10000)
+        # CSV はリザルトのある楽曲特定済みプレイのみ出力（検出失敗・スキップは除外）
+        recent = self._results.list_results_for_export(limit=10000)
         rows = []
         for _session_id, started_at, chart_id, result in recent:
             if date_from and started_at.date() < date_from:

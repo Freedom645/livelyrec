@@ -276,15 +276,21 @@ def test_it_rec_01_full_loop_records_result(tmp_path) -> None:
         )
         service.start()
         try:
+            # list_recent は IN_PROGRESS（result 未記録）のセッションも含むため、
+            # 「score が記録された」を待ち条件にする。
             recorded = _wait_for(
-                lambda: len(result_repo.list_recent(5)) > 0, timeout=10.0
+                lambda: any(
+                    e.score is not None for e in result_repo.list_recent(5)
+                ),
+                timeout=10.0,
             )
         finally:
             service.stop()
 
         assert recorded, "リザルトが記録されなかった"
-        recent = result_repo.list_recent(5)
-        assert recent[0][3].score == 90000
+        recent = [e for e in result_repo.list_recent(5) if e.score is not None]
+        assert recent
+        assert recent[0].score == 90000
     finally:
         conn.close()
 

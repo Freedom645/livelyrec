@@ -383,3 +383,160 @@ def test_decode_png_roundtrip() -> None:
 def test_decode_png_invalid_raises() -> None:
     with pytest.raises(ValueError):
         _decode_png_to_bgr(b"not a png at all")
+
+
+# ---- FR-REC-039 / FR-STR-008: 検出失敗時のハンドリング ----
+
+def test_handle_play_creates_failed_detection_session() -> None:
+    """song_identification_failed=True で chart=None の検出失敗セッションが作られる。"""
+    svc, sr, _, _ = _service()
+    events: list[dict] = []
+    svc.add_listener(events.append)
+    svc._handle_analysis(
+        AnalysisResult(
+            screen=ScreenType.PLAY, confidence=0.9, identified_chart=None,
+            song_identification_failed=True, raw_song_text="??",
+        )
+    )
+    assert len(sr.created) == 1
+    assert sr.created[0].chart is None  # NULL セッション
+    started = next(e for e in events if e["type"] == "play.started")
+    assert started["payload"]["chart_id"] is None
+    assert started["payload"]["title"] == "検出失敗"
+    nps = [e for e in events if e["type"] == "now_playing.changed"]
+    assert nps
+    assert nps[-1]["payload"]["identified"] is False
+    assert nps[-1]["payload"]["display_title"] == "検出失敗"
+
+
+def test_now_playing_changed_for_identified_session() -> None:
+    """楽曲特定済みプレイ開始時にも now_playing.changed が配信される。"""
+    svc, _, _, _ = _service()
+    events: list[dict] = []
+    svc.add_listener(events.append)
+    svc._handle_analysis(
+        AnalysisResult(screen=ScreenType.PLAY, confidence=0.9, identified_chart=_CHART)
+    )
+    nps = [e for e in events if e["type"] == "now_playing.changed"]
+    assert nps
+    p = nps[-1]["payload"]
+    assert p["identified"] is True
+    assert p["chart"]["title"] == "テスト楽曲"
+    assert p["display_title"] == "テスト楽曲"
+
+
+def test_handle_result_for_failed_detection_session() -> None:
+    """検出失敗セッションでもリザルト記録は走り、display_title='検出失敗' で配信される。"""
+    svc, sr, rr, _ = _service()
+    # 検出失敗でプレイ開始
+    svc._handle_analysis(
+        AnalysisResult(
+            screen=ScreenType.PLAY, confidence=0.9, identified_chart=None,
+            song_identification_failed=True, raw_song_text="??",
+        )
+    )
+    events: list[dict] = []
+    svc.add_listener(events.append)
+    _feed_result(svc, AnalysisResult(
+        screen=ScreenType.RESULT, confidence=0.9, identified_chart=None,
+        song_identification_failed=True,
+        result_score=50000, result_clear_type="CLEAR",
+    ))
+    assert len(rr.upserts) == 1  # 検出失敗でも result は記録
+    assert any(s[1] == SessionStatus.COMPLETED for s in sr.statuses)
+    rec = next(e for e in events if e["type"] == "result.recorded")
+    assert rec["payload"]["chart"] is None
+    assert rec["payload"]["display_title"] == "検出失敗"
+
+
+# ---- FR-REC-046 / FR-DEV-002: writer 連携 ----
+
+class _SpyResultWriter:
+    def __init__(self) -> None:
+        self.calls: list[tuple] = []
+
+    def is_enabled(self) -> bool: return True
+    def set_enabled(self, enabled: bool) -> None: ...
+    def set_output_dir(self, output_dir) -> None: ...
+    def save(self, frame_bgr, song_title, score, ts=None) -> None:  # noqa: ARG002
+        self.calls.append((song_title, score))
+
+
+class _SpyBannerWriter:
+    def __init__(self) -> None:
+        self.calls: list[tuple] = []
+
+    def is_enabled(self) -> bool: return True
+    def set_enabled(self, enabled: bool) -> None: ...
+    def set_output_dir(self, output_dir) -> None: ...
+    def save(self, frame_bgr, song_title, ts=None) -> None:  # noqa: ARG002
+        self.calls.append((song_title,))
+
+
+def test_writers_called_on_result_when_frame_provided() -> None:
+    sr, rr, dr = FakeSessionRepo(), FakeResultRepo(), FakeDailyRepo()
+    spy_r, spy_b = _SpyResultWriter(), _SpyBannerWriter()
+    svc = RecordingService(
+        obs=object(), analysis=object(), session_repo=sr,
+        result_repo=rr, daily_repo=dr,
+        result_writer=spy_r, banner_writer=spy_b,
+    )
+    # プレイ開始
+    svc._handle_analysis(
+        AnalysisResult(screen=ScreenType.PLAY, confidence=0.9, identified_chart=_CHART)
+    )
+    frame = np.zeros((20, 30, 3), dtype=np.uint8)
+    for _ in range(3):
+        svc._handle_analysis(AnalysisResult(
+            screen=ScreenType.RESULT, confidence=0.9, identified_chart=_CHART,
+            result_score=87000, result_clear_type="CLEAR",
+        ), frame=frame)
+    assert spy_r.calls == [("テスト楽曲", 87000)]
+    assert spy_b.calls == [("テスト楽曲",)]
+
+
+def test_banner_writer_skipped_on_failed_detection_session() -> None:
+    """検出失敗セッションでは banner_writer は呼ばれない（楽曲不明のため学習データ無意味）。"""
+    sr, rr, dr = FakeSessionRepo(), FakeResultRepo(), FakeDailyRepo()
+    spy_r, spy_b = _SpyResultWriter(), _SpyBannerWriter()
+    svc = RecordingService(
+        obs=object(), analysis=object(), session_repo=sr,
+        result_repo=rr, daily_repo=dr,
+        result_writer=spy_r, banner_writer=spy_b,
+    )
+    svc._handle_analysis(
+        AnalysisResult(
+            screen=ScreenType.PLAY, confidence=0.9, identified_chart=None,
+            song_identification_failed=True, raw_song_text="??",
+        )
+    )
+    frame = np.zeros((20, 30, 3), dtype=np.uint8)
+    for _ in range(3):
+        svc._handle_analysis(AnalysisResult(
+            screen=ScreenType.RESULT, confidence=0.9, identified_chart=None,
+            song_identification_failed=True,
+            result_score=50000, result_clear_type="CLEAR",
+        ), frame=frame)
+    # 自動スクショは検出失敗でも保存（title=None なので unknown）
+    assert spy_r.calls == [(None, 50000)]
+    # バナーは保存しない
+    assert spy_b.calls == []
+
+
+def test_set_result_capture_propagates_to_writer() -> None:
+    sr, rr, dr = FakeSessionRepo(), FakeResultRepo(), FakeDailyRepo()
+    states: list[bool] = []
+
+    class W:
+        def is_enabled(self): return False
+        def set_enabled(self, enabled): states.append(enabled)
+        def set_output_dir(self, output_dir): ...
+        def save(self, *a, **kw): ...
+
+    svc = RecordingService(
+        obs=object(), analysis=object(), session_repo=sr,
+        result_repo=rr, daily_repo=dr, result_writer=W(),
+    )
+    svc.set_result_capture(True)
+    svc.set_result_capture(False)
+    assert states == [True, False]

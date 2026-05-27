@@ -26,6 +26,8 @@ def _make_paths(
         export_dir=data / "export",
         crash_dir=data / "crash",
         debug_dir=data / "debug",
+        result_dir=data / "result",
+        banner_dir=data / "banner",
         templates_dir=bundle_dir / "templates",
         browser_source_dir=bundle_dir / "browser_source",
         master_seed_file=bundle_dir / "data" / "master.json",

@@ -41,6 +41,7 @@ class RecordStatusPanel(QGroupBox):
         vm.screen_changed.connect(self._on_screen_changed)
         vm.play_started.connect(self._on_play_started)
         vm.result_recorded.connect(self._on_result_recorded)
+        vm.now_playing_changed.connect(self._on_now_playing_changed)
 
     @Slot(str, float)
     def _on_screen_changed(self, screen: str, confidence: float) -> None:
@@ -48,8 +49,23 @@ class RecordStatusPanel(QGroupBox):
 
     @Slot(dict)
     def _on_play_started(self, payload: dict) -> None:
-        self._song.setText(str(payload.get("title") or "—"))
-        self._difficulty.setText(str(payload.get("difficulty") or "—"))
+        # title が空・None・"検出失敗" のいずれでもそのまま表示する
+        title = payload.get("title")
+        self._song.setText(title if title else "—")
+        diff = payload.get("difficulty")
+        self._difficulty.setText(diff if diff else "—")
+
+    @Slot(dict)
+    def _on_now_playing_changed(self, payload: dict) -> None:
+        # 楽曲名検出失敗（FR-STR-008）のときも UI 上「検出失敗」表示を反映する
+        display = payload.get("display_title") or "—"
+        self._song.setText(display)
+        chart = payload.get("chart") or {}
+        diff = chart.get("difficulty") or "—"
+        level = chart.get("level")
+        if level is not None and diff != "—":
+            diff = f"{diff} Lv.{level}"
+        self._difficulty.setText(diff)
 
     @Slot(dict)
     def _on_result_recorded(self, payload: dict) -> None:

@@ -32,6 +32,8 @@ class AppPaths:
     export_dir: Path
     crash_dir: Path
     debug_dir: Path
+    result_dir: Path     # リザルト自動スクショ既定先（FR-REC-046）
+    banner_dir: Path     # 開発者向けバナー画像既定先（FR-DEV-002）
     templates_dir: Path
     browser_source_dir: Path
     master_seed_file: Path
@@ -50,7 +52,7 @@ class AppPaths:
 
         data = root / DATA_DIR_NAME
         data.mkdir(exist_ok=True)
-        for sub in ("db", "logs", "export", "crash", "debug"):
+        for sub in ("db", "logs", "export", "crash", "debug", "result", "banner"):
             (data / sub).mkdir(exist_ok=True)
 
         return cls(
@@ -63,6 +65,8 @@ class AppPaths:
             export_dir=data / "export",
             crash_dir=data / "crash",
             debug_dir=data / "debug",
+            result_dir=data / "result",
+            banner_dir=data / "banner",
             templates_dir=bundle / "templates",
             browser_source_dir=bundle / "browser_source",
             master_seed_file=bundle / "data" / "master.json",

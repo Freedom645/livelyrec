@@ -5,6 +5,7 @@
 
 from __future__ import annotations
 
+import shutil
 from collections.abc import Callable
 from dataclasses import replace
 
@@ -13,7 +14,10 @@ from PySide6.QtWidgets import (
     QComboBox,
     QDialog,
     QDialogButtonBox,
+    QFileDialog,
     QFormLayout,
+    QFrame,
+    QGroupBox,
     QHBoxLayout,
     QLabel,
     QLineEdit,
@@ -27,6 +31,13 @@ from PySide6.QtWidgets import (
 
 from livelyrec.infrastructure.config_store import AppSettings
 from livelyrec.shared.network import resolve_advertised_host
+
+
+def _h_separator() -> QFrame:
+    line = QFrame()
+    line.setFrameShape(QFrame.HLine)
+    line.setFrameShadow(QFrame.Sunken)
+    return line
 
 
 class SettingsDialog(QDialog):
@@ -61,6 +72,7 @@ class SettingsDialog(QDialog):
         layout = QVBoxLayout(self)
         layout.addWidget(self._build_warning_bar())
         layout.addWidget(tabs)
+        layout.addWidget(self._build_developer_section())
         layout.addWidget(buttons)
 
     # ---- 警告バー ----
@@ -155,6 +167,38 @@ class SettingsDialog(QDialog):
         layout.addRow("fps:", self._fps)
         layout.addRow("プレイ日切替時刻 (時):", self._rollover)
         layout.addRow("", self._debug_capture)
+
+        # ---- リザルト画面の自動スクリーンショット（FR-REC-046〜048） ----
+        layout.addRow(_h_separator())
+        self._result_capture_enabled = QCheckBox(
+            "リザルト画面を自動でスクリーンショット保存する"
+        )
+        self._result_capture_enabled.setChecked(self._settings.result_capture.enabled)
+        self._result_capture_dir = QLineEdit(
+            self._settings.result_capture.output_dir or ""
+        )
+        self._result_capture_dir.setPlaceholderText(
+            "（既定: livelyrec_data/result/）"
+        )
+        result_dir_browse = QPushButton("参照…")
+        result_dir_browse.clicked.connect(
+            lambda: self._browse_dir_into(self._result_capture_dir)
+        )
+        result_dir_row = QHBoxLayout()
+        result_dir_row.addWidget(self._result_capture_dir, stretch=1)
+        result_dir_row.addWidget(result_dir_browse)
+        self._result_capture_freespace = QLabel("")
+        self._result_capture_dir.textChanged.connect(
+            lambda _t: self._refresh_freespace_label(
+                self._result_capture_dir, self._result_capture_freespace
+            )
+        )
+        self._refresh_freespace_label(
+            self._result_capture_dir, self._result_capture_freespace
+        )
+        layout.addRow("", self._result_capture_enabled)
+        layout.addRow("保存先:", result_dir_row)
+        layout.addRow("", self._result_capture_freespace)
         return w
 
     # ---- WebSocket タブ ----
@@ -235,6 +279,84 @@ class SettingsDialog(QDialog):
         layout.addRow("配信元URL:", self._master_url)
         return w
 
+    # ---- 開発者設定セクション（FR-DEV-001） ----
+    def _build_developer_section(self) -> QWidget:
+        """設定ダイアログ末尾に配置する折りたたみ風の開発者設定セクション。"""
+        box = QGroupBox("開発者設定（実験的機能）", self)
+        box.setCheckable(True)
+        box.setChecked(False)  # 既定で折りたたみ（中身を非表示）
+        inner = QWidget(box)
+        layout = QFormLayout(inner)
+        note = QLabel(
+            "⚠ この機能は LivelyRec の認識精度向上のための実験的機能です。\n"
+            "  データの保存先容量に注意してください。"
+        )
+        note.setStyleSheet("color: #884400;")
+        note.setWordWrap(True)
+        layout.addRow(note)
+
+        self._dev_banner_enabled = QCheckBox(
+            "リザルト画面のバナー画像を保存する（開発者向け）"
+        )
+        self._dev_banner_enabled.setChecked(
+            self._settings.developer.banner_capture_enabled
+        )
+        self._dev_banner_dir = QLineEdit(self._settings.developer.banner_dir or "")
+        self._dev_banner_dir.setPlaceholderText("（既定: livelyrec_data/banner/）")
+        browse = QPushButton("参照…")
+        browse.clicked.connect(
+            lambda: self._browse_dir_into(self._dev_banner_dir)
+        )
+        dev_dir_row = QHBoxLayout()
+        dev_dir_row.addWidget(self._dev_banner_dir, stretch=1)
+        dev_dir_row.addWidget(browse)
+        self._dev_banner_freespace = QLabel("")
+        self._dev_banner_dir.textChanged.connect(
+            lambda _t: self._refresh_freespace_label(
+                self._dev_banner_dir, self._dev_banner_freespace
+            )
+        )
+        self._refresh_freespace_label(
+            self._dev_banner_dir, self._dev_banner_freespace
+        )
+        layout.addRow("", self._dev_banner_enabled)
+        layout.addRow("保存先:", dev_dir_row)
+        layout.addRow("", self._dev_banner_freespace)
+
+        outer = QVBoxLayout(box)
+        outer.addWidget(inner)
+        # 折りたたみ: チェック状態に合わせて中身の可視性を切り替え
+        inner.setVisible(box.isChecked())
+        box.toggled.connect(inner.setVisible)
+        return box
+
+    # ---- 共通: ディレクトリ参照ボタン ----
+    @staticmethod
+    def _browse_dir_into(target: QLineEdit) -> None:
+        path = QFileDialog.getExistingDirectory(
+            None, "保存先フォルダを選択", target.text() or ""
+        )
+        if path:
+            target.setText(path)
+
+    # ---- 共通: 空き容量警告ラベル（NFR-OPS-006） ----
+    @staticmethod
+    def _refresh_freespace_label(target: QLineEdit, label: QLabel) -> None:
+        """指定パスのドライブ空き容量を表示。500MB を下回ったら警告色。"""
+        path = target.text().strip() or "."
+        try:
+            free_bytes = shutil.disk_usage(path).free
+        except (FileNotFoundError, OSError):
+            label.setText("空き容量: パスにアクセスできません")
+            label.setStyleSheet("color: #aa6600;")
+            return
+        free_mb = free_bytes / (1024 * 1024)
+        label.setText(f"空き容量: {free_mb:,.0f} MB")
+        # 500MB 未満で警告色（NFR-OPS-006）
+        label.setStyleSheet(
+            "color: #cc0000;" if free_bytes < 500 * 1024 * 1024 else "color: #555;"
+        )
+
     # ---- 結果取得 ----
     def to_settings(self) -> AppSettings:
         s = self._settings
@@ -275,6 +397,16 @@ class SettingsDialog(QDialog):
             master=replace(
                 s.master,
                 endpoint_url=self._master_url.text().strip(),
+            ),
+            result_capture=replace(
+                s.result_capture,
+                enabled=self._result_capture_enabled.isChecked(),
+                output_dir=(self._result_capture_dir.text().strip() or None),
+            ),
+            developer=replace(
+                s.developer,
+                banner_capture_enabled=self._dev_banner_enabled.isChecked(),
+                banner_dir=(self._dev_banner_dir.text().strip() or None),
             ),
         )
         return new

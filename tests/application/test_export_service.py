@@ -10,12 +10,12 @@ from livelyrec.domain.score import ClearType, Judgements, Medal, Rank, Result
 
 
 class FakeResultRepo:
-    """list_recent が固定の行を返すフェイク。"""
+    """list_results_for_export が固定の行を返すフェイク。"""
 
     def __init__(self, rows: list[tuple]) -> None:
         self._rows = rows
 
-    def list_recent(self, limit: int = 10000) -> list[tuple]:  # noqa: ARG002
+    def list_results_for_export(self, limit: int = 10000) -> list[tuple]:  # noqa: ARG002
         return self._rows
 
 

@@ -74,7 +74,13 @@ def test_recent_results_panel_smoke(qtbot) -> None:
 
 
 def test_broadcast_url_panel_smoke(qtbot) -> None:
-    panel = BroadcastUrlPanel("http://127.0.0.1:14514/browser/index.html")
+    urls = {
+        "打鍵数カウンタ": "http://127.0.0.1:14514/browser/keycount/",
+        "現在のプレイ楽曲": "http://127.0.0.1:14514/browser/now-playing/",
+        "選曲中の楽曲のスコア履歴": "http://127.0.0.1:14514/browser/now-playing-history/",
+        "直近 10 件のプレイ履歴": "http://127.0.0.1:14514/browser/recent/",
+    }
+    panel = BroadcastUrlPanel(urls)
     qtbot.addWidget(panel)
 
 

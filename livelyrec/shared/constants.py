@@ -19,5 +19,13 @@ MAX_FPS = 2
 SCREEN_BASE_WIDTH = 1366
 SCREEN_BASE_HEIGHT = 768
 
-SCHEMA_VERSION = 1
+SCHEMA_VERSION = 2
 WS_SCHEMA_VERSION = "v1"
+
+# 配信支援ブラウザソースの 4 パス（FR-STR-007）
+BROWSER_SOURCE_PATHS = (
+    "keycount",
+    "now-playing",
+    "now-playing-history",
+    "recent",
+)

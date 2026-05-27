@@ -23,6 +23,7 @@ class RecordingViewModel(QObject):
     result_recorded = Signal(dict)
     judgements_tick = Signal(dict)
     business_day_rolled = Signal(dict)
+    now_playing_changed = Signal(dict)
     error_occurred = Signal(dict)
 
     # スレッド跨ぎ用の内部シグナル。別スレッドから emit されると
@@ -63,5 +64,7 @@ class RecordingViewModel(QObject):
             self.judgements_tick.emit(payload)
         elif et == "business_day.rolled":
             self.business_day_rolled.emit(payload)
+        elif et == "now_playing.changed":
+            self.now_playing_changed.emit(payload)
         elif et == "error":
             self.error_occurred.emit(payload)

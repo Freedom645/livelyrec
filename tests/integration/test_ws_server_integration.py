@@ -270,3 +270,57 @@ def test_it_ws_05_serves_browser_source_over_http(tmp_path) -> None:
     assert "text/html" in ctype
     assert "LivelyRec overlay" in body
     assert not_found is True
+
+
+def test_it_ws_06_serves_four_browser_sources(tmp_path) -> None:
+    """v1.x の 4 ブラウザソース URL がそれぞれ index.html を配信する（FR-STR-007）。
+
+    URL のハイフン区切り（`now-playing`）が内部のアンダースコア
+    ディレクトリ名（`now_playing`）にマッピングされることも併せて確認。
+    """
+    bdir = tmp_path / "browser_source"
+    bdir.mkdir()
+    # ランディング
+    (bdir / "index.html").write_text("landing", encoding="utf-8")
+    # 4 サブフォルダ
+    for sub, body in [
+        ("keycount", "kc"),
+        ("now_playing", "np"),
+        ("now_playing_history", "nph"),
+        ("recent", "rc"),
+    ]:
+        d = bdir / sub
+        d.mkdir()
+        (d / "index.html").write_text(body, encoding="utf-8")
+        (d / "app.js").write_text(f"// {sub}", encoding="utf-8")
+    (bdir / "common.js").write_text("// common", encoding="utf-8")
+
+    port = _free_port()
+    server = WebSocketServer(
+        WsServerConfig(host="127.0.0.1", port=port), browser_source_dir=bdir
+    )
+    server.start()
+    _wait_listening(server)
+    try:
+        def _fetch(path: str) -> str:
+            with urllib.request.urlopen(
+                f"http://127.0.0.1:{port}{path}", timeout=5
+            ) as resp:
+                return resp.read().decode("utf-8")
+
+        # ランディングは直アクセス＋ index.html 補完
+        assert _fetch("/browser/") == "landing"
+        assert _fetch("/browser/index.html") == "landing"
+        # 4 サブフォルダ（ハイフン URL → アンダースコアディレクトリ）
+        assert _fetch("/browser/keycount/") == "kc"
+        assert _fetch("/browser/keycount/index.html") == "kc"
+        assert _fetch("/browser/now-playing/") == "np"
+        assert _fetch("/browser/now-playing-history/") == "nph"
+        assert _fetch("/browser/recent/") == "rc"
+        # 共通 JS
+        assert _fetch("/browser/common.js") == "// common"
+        # サブフォルダの app.js も配信される
+        assert _fetch("/browser/keycount/app.js") == "// keycount"
+        assert _fetch("/browser/now-playing/app.js") == "// now_playing"
+    finally:
+        server.stop()

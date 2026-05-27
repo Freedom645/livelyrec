@@ -124,10 +124,13 @@ class Result:
 
 @dataclass
 class PlaySession:
-    """プレイセッション。リトライ含む1譜面のプレイ単位。"""
+    """プレイセッション。リトライ含む1譜面のプレイ単位。
+
+    `chart=None` は楽曲名 OCR が特定不能だった「検出失敗セッション」を表す（FR-REC-039）。
+    """
 
     session_id: str
-    chart: Chart
+    chart: Chart | None
     started_at: datetime
     business_date: date
     attempt_count: int = 1

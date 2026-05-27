@@ -139,13 +139,38 @@ class WebSocketServer:
         return self._serve_static(request.path)
 
     def _serve_static(self, path: str) -> Response:
+        """ブラウザソースの静的ファイルを返す。
+
+        v1.x のパス構成（FR-STR-007 / FR-STR-010）:
+        - `/browser/`                       → `browser_source/index.html`（ランディング）
+        - `/browser/keycount/...`           → `browser_source/keycount/...`
+        - `/browser/now-playing/...`        → `browser_source/now_playing/...`
+        - `/browser/now-playing-history/...` → `browser_source/now_playing_history/...`
+        - `/browser/recent/...`             → `browser_source/recent/...`
+        - `/browser/common.js`              → `browser_source/common.js`
+
+        URL のハイフン区切り（`now-playing`）を内部のアンダースコア
+        ディレクトリ名（`now_playing`）にマッピングする。
+        """
         if self._browser_dir is None:
             return _http_response(404, "Not Found", b"browser source not available")
         rel = path.split("?", 1)[0].lstrip("/")
-        if rel.startswith("browser/"):
-            rel = rel[len("browser/") :]
-        if rel in ("", "browser"):
+        if not rel.startswith("browser"):
+            return _http_response(404, "Not Found", b"not found")
+        rel = rel[len("browser"):].lstrip("/")
+        if rel == "":
             rel = "index.html"
+
+        # 末尾が / で終わる（ディレクトリ要求）場合は index.html を補完
+        if rel.endswith("/"):
+            rel = rel + "index.html"
+        # ディレクトリ自体（拡張子なし、index.html を付ければファイルになる）も同様
+        elif "." not in rel.rsplit("/", 1)[-1]:
+            rel = rel + "/index.html"
+
+        # ハイフン区切りのソース名をアンダースコアのディレクトリ名へ
+        rel = _hyphen_to_snake_first_segment(rel)
+
         base = self._browser_dir.resolve()
         target = (base / rel).resolve()
         # ディレクトリトラバーサル防止
@@ -295,6 +320,18 @@ _CONTENT_TYPES = {
 
 def _content_type(suffix: str) -> str:
     return _CONTENT_TYPES.get(suffix.lower(), "application/octet-stream")
+
+
+# URL の最初のセグメントだけハイフン→アンダースコア変換する
+# （`now-playing/app.js` → `now_playing/app.js`、`common.js` はそのまま）。
+_HYPHEN_SOURCES = {"keycount", "now-playing", "now-playing-history", "recent"}
+
+
+def _hyphen_to_snake_first_segment(rel: str) -> str:
+    head, sep, tail = rel.partition("/")
+    if head in _HYPHEN_SOURCES:
+        head = head.replace("-", "_")
+    return head + sep + tail
 
 
 def _http_response(

@@ -49,3 +49,39 @@ def test_load_invalid_json_raises(tmp_path: Path) -> None:
     p.write_text("{ not json", encoding="utf-8")
     with pytest.raises(ConfigError):
         ConfigStore(p).load()
+
+
+def test_load_v1_settings_migrates_to_v2_with_defaults(tmp_path: Path) -> None:
+    """v1 設定（result_capture / developer 不在）が v2 既定値で補完される。"""
+    p = tmp_path / "settings.json"
+    p.write_text(
+        json.dumps({
+            "schema_version": 1,
+            "obs": {"host": "10.0.0.1"},
+        }),
+        encoding="utf-8",
+    )
+    settings = ConfigStore(p).load()
+    assert settings.schema_version == 2
+    assert settings.obs.host == "10.0.0.1"
+    # v2 で追加されたセクションは既定値で埋まる
+    assert settings.result_capture.enabled is False
+    assert settings.result_capture.output_dir is None
+    assert settings.developer.banner_capture_enabled is False
+    assert settings.developer.banner_dir is None
+
+
+def test_save_roundtrip_keeps_new_sections(tmp_path: Path) -> None:
+    """新規セクションへ変更を加えても round-trip が保たれる。"""
+    store = ConfigStore(tmp_path / "settings.json")
+    s = store.load()
+    s.result_capture.enabled = True
+    s.result_capture.output_dir = "/tmp/result"
+    s.developer.banner_capture_enabled = True
+    s.developer.banner_dir = "/tmp/banner"
+    store.save(s)
+    again = store.load()
+    assert again.result_capture.enabled is True
+    assert again.result_capture.output_dir == "/tmp/result"
+    assert again.developer.banner_capture_enabled is True
+    assert again.developer.banner_dir == "/tmp/banner"

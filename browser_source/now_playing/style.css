@@ -1,0 +1,42 @@
+/* /browser/now-playing/ — 現在のプレイ楽曲既定スタイル */
+html, body {
+  margin: 0;
+  padding: 0;
+  background: transparent;
+  color: #fff;
+  font-family: "Yu Gothic UI", "Meiryo", sans-serif;
+}
+
+.livelyrec-now-playing {
+  padding: 12px 16px;
+  background: rgba(0, 0, 0, 0.55);
+  border-radius: 8px;
+  width: 360px;
+  box-sizing: border-box;
+}
+
+.livelyrec-now-playing h3 {
+  margin: 0 0 6px 0;
+  font-size: 18px;
+  word-break: break-all;
+}
+
+.livelyrec-meta {
+  margin: 0;
+  font-size: 14px;
+  color: #ccc;
+}
+
+.livelyrec-difficulty { font-weight: bold; margin-right: 8px; }
+.livelyrec-genre { margin: 4px 0 0 0; font-size: 12px; color: #aaa; }
+
+.livelyrec-status {
+  margin: 6px 0 0 0;
+  font-size: 12px;
+  color: #888;
+}
+
+/* 楽曲名 OCR 失敗（FR-STR-008）。data-lr-detection="failed" のとき強調表示 */
+.livelyrec-now-playing[data-lr-detection="failed"] h3 {
+  color: #ff8888;
+}

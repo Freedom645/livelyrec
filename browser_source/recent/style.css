@@ -1,0 +1,47 @@
+/* /browser/recent/ — 直近10件のプレイ履歴 既定スタイル */
+html, body {
+  margin: 0;
+  padding: 0;
+  background: transparent;
+  color: #fff;
+  font-family: "Yu Gothic UI", "Meiryo", sans-serif;
+}
+
+.livelyrec-recent {
+  padding: 12px 16px;
+  background: rgba(0, 0, 0, 0.55);
+  border-radius: 8px;
+  width: 560px;
+  box-sizing: border-box;
+}
+
+.livelyrec-recent h3 {
+  margin: 0 0 8px 0;
+  font-size: 16px;
+}
+
+.livelyrec-recent-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.livelyrec-recent-table th,
+.livelyrec-recent-table td {
+  text-align: left;
+  padding: 3px 6px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.livelyrec-recent-table th { color: #ccc; font-weight: normal; }
+
+.livelyrec-status {
+  margin: 8px 0 0 0;
+  font-size: 12px;
+  color: #888;
+}
+
+/* 検出失敗（chart_id=null）の行を強調表示 */
+.livelyrec-recent-table tr[data-lr-detection="failed"] td[data-lr="display-title"] {
+  color: #ff8888;
+}

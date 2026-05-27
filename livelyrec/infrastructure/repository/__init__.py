@@ -8,7 +8,7 @@ from .chart_repo import ChartRepository
 from .connection import open_database
 from .daily_counter_repo import DailyCounterRepository
 from .play_session_repo import PlaySessionRepository
-from .result_repo import ResultRepository
+from .result_repo import RecentEntry, ResultRepository
 from .schema import LATEST_SCHEMA_VERSION
 from .song_repo import SongRepository
 
@@ -19,6 +19,7 @@ __all__ = [
     "ChartRepository",
     "PlaySessionRepository",
     "ResultRepository",
+    "RecentEntry",
     "DailyCounterRepository",
     "AppKvRepository",
 ]

@@ -243,6 +243,28 @@ def main() -> int:
         source_name=settings.obs.source_name,
     ))
 
+    # 自動スクショ／開発者向けバナー画像の writer（FR-REC-046 / FR-DEV-002）
+    from livelyrec.infrastructure.banner_writer import BannerWriter
+    from livelyrec.infrastructure.filename_sanitizer import FilenameSanitizer
+    from livelyrec.infrastructure.recognizer.roi_defs import RESULT_ROI
+    from livelyrec.infrastructure.result_writer import ResultWriter
+    sanitizer = FilenameSanitizer()
+    result_writer = ResultWriter(
+        enabled=settings.result_capture.enabled,
+        output_dir=Path(settings.result_capture.output_dir)
+        if settings.result_capture.output_dir
+        else paths.result_dir,
+        sanitizer=sanitizer,
+    )
+    banner_writer = BannerWriter(
+        enabled=settings.developer.banner_capture_enabled,
+        output_dir=Path(settings.developer.banner_dir)
+        if settings.developer.banner_dir
+        else paths.banner_dir,
+        banner_roi=RESULT_ROI["banner"],
+        sanitizer=sanitizer,
+    )
+
     recording = RecordingService(
         obs=obs,
         analysis=analysis,
@@ -253,6 +275,8 @@ def main() -> int:
         fps=settings.recording.fps,
         debug_dir=paths.debug_dir,
         debug_capture=settings.recording.debug_capture,
+        result_writer=result_writer,
+        banner_writer=banner_writer,
     )
 
     export = ExportService(result_repo)
@@ -301,6 +325,37 @@ def main() -> int:
             ],
         }
     ws.register_request_handler("chart.history.request", _on_chart_history)
+
+    # /browser/recent 用: DB 全履歴から最新 N 件（既定 10、許容 1〜50）（FR-STR-009）
+    from livelyrec.application.recording_service import DETECTION_FAILED_LABEL
+
+    def _on_recent_history(payload: dict) -> dict:
+        request_id = payload.get("request_id")
+        try:
+            limit = int(payload.get("limit", 10))
+        except (TypeError, ValueError):
+            limit = 10
+        limit = max(1, min(50, limit))
+        entries = result_repo.list_recent(limit=limit)
+        return {
+            "request_id": request_id,
+            "entries": [
+                {
+                    "session_id": e.session_id,
+                    "started_at": e.started_at.isoformat(),
+                    "chart_id": e.chart_id,
+                    "display_title": e.song_title or DETECTION_FAILED_LABEL,
+                    "difficulty": e.difficulty,
+                    "level": e.level,
+                    "score": e.score,
+                    "clear_type": e.clear_type,
+                    "rank": e.rank,
+                    "medal": e.medal,
+                }
+                for e in entries
+            ],
+        }
+    ws.register_request_handler("recent.history.request", _on_recent_history)
 
     # RecordingService → WebSocket への自動転送
     def _forward_to_ws(event: dict) -> None:

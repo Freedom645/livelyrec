@@ -2,42 +2,48 @@
 <html lang="ja">
 <head>
   <meta charset="utf-8">
-  <title>LivelyRec - Broadcast Overlay</title>
-  <link rel="stylesheet" href="style.css">
-  <link rel="stylesheet" id="custom-theme" href="">
+  <title>LivelyRec - 配信支援ブラウザソース</title>
+  <style>
+    body {
+      font-family: "Yu Gothic UI", "Meiryo", sans-serif;
+      background: #1a1a1a;
+      color: #fff;
+      padding: 24px;
+      max-width: 720px;
+      margin: 0 auto;
+    }
+    h1 { font-size: 20px; margin-bottom: 4px; }
+    p.subtitle { color: #aaa; margin-top: 0; }
+    ul { padding-left: 1.2em; }
+    li { margin: 12px 0; }
+    a { color: #66ccff; text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    .desc { color: #ccc; font-size: 13px; margin-left: 8px; }
+  </style>
 </head>
 <body>
-  <div class="livelyrec-overlay" data-lr="root">
-    <section class="livelyrec-counter" data-lr="counter">
-      <div class="livelyrec-counter-row" data-lr="cool">
-        <span class="lbl">COOL</span><span class="val" data-lr-val="cool">0</span>
-      </div>
-      <div class="livelyrec-counter-row" data-lr="great">
-        <span class="lbl">GREAT</span><span class="val" data-lr-val="great">0</span>
-      </div>
-      <div class="livelyrec-counter-row" data-lr="good">
-        <span class="lbl">GOOD</span><span class="val" data-lr-val="good">0</span>
-      </div>
-      <div class="livelyrec-counter-row" data-lr="bad">
-        <span class="lbl">BAD</span><span class="val" data-lr-val="bad">0</span>
-      </div>
-      <div class="livelyrec-counter-row livelyrec-counter-total" data-lr="total">
-        <span class="lbl">TOTAL</span><span class="val" data-lr-val="total">0</span>
-      </div>
-    </section>
-
-    <section class="livelyrec-history" data-lr="history">
-      <h3 data-lr="song-title">楽曲を選択してください</h3>
-      <table>
-        <tr><th>Best</th><td data-lr="best">—</td></tr>
-        <tr><th>Latest</th><td data-lr="latest">—</td></tr>
-      </table>
-    </section>
-
-    <section class="livelyrec-status" data-lr="status">
-      <span data-lr="ws-status">未接続</span>
-    </section>
-  </div>
-  <script src="app.js"></script>
+  <h1>LivelyRec 配信支援ブラウザソース</h1>
+  <p class="subtitle">
+    OBS の「ブラウザソース」に以下のいずれかの URL を設定してください。
+    それぞれ独立したソースとして OBS シーンに追加できます。
+  </p>
+  <ul>
+    <li>
+      <a href="./keycount/">/browser/keycount/</a>
+      <span class="desc">打鍵カウンタ + 時系列グラフ</span>
+    </li>
+    <li>
+      <a href="./now-playing/">/browser/now-playing/</a>
+      <span class="desc">現在のプレイ楽曲（楽曲名・難易度・レベル）</span>
+    </li>
+    <li>
+      <a href="./now-playing-history/">/browser/now-playing-history/</a>
+      <span class="desc">直近プレイ楽曲のスコア履歴（v1.x はプレースホルダ実装）</span>
+    </li>
+    <li>
+      <a href="./recent/">/browser/recent/</a>
+      <span class="desc">直近 10 件のプレイ履歴</span>
+    </li>
+  </ul>
 </body>
 </html>

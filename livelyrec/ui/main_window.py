@@ -62,21 +62,6 @@ class MainWindow(QMainWindow):
         self._recording.add_listener(self._vm.post_event)
         self._vm.error_occurred.connect(self._on_error)
 
-        # LAN 公開時は他PC（OBS 配信PC等）からアクセスできるよう、
-        # 表示 URL の host を LAN IP に切り替える。lan_publish=False の通常運用では
-        # 設定値（既定 127.0.0.1）をそのまま使う。
-        adv_host = resolve_advertised_host(
-            settings.websocket_server.host,
-            settings.websocket_server.lan_publish,
-        )
-        browser_url = (
-            f"http://{adv_host}:{settings.websocket_server.port}/browser/index.html"
-        )
-        # 後方互換: settings.json で token を明示設定している上級利用者向けに、
-        # トークン付与は維持する。UI からトークン設定 UI は廃止（家庭内 LAN 想定）。
-        if settings.websocket_server.lan_publish and settings.websocket_server.token:
-            browser_url += f"?token={settings.websocket_server.token}"
-
         self._conn_panel = ConnectionPanel(
             self._vm, self._on_start, self._on_stop, self._on_settings, self
         )
@@ -85,7 +70,7 @@ class MainWindow(QMainWindow):
             self._vm, settings.recording.business_day_rollover_hour, self
         )
         self._recent_panel = RecentResultsPanel(self._vm, parent=self)
-        self._url_panel = BroadcastUrlPanel(browser_url, self)
+        self._url_panel = BroadcastUrlPanel(self._build_browser_urls(settings), self)
 
         central = QWidget(self)
         outer = QVBoxLayout(central)
@@ -164,13 +149,48 @@ class MainWindow(QMainWindow):
         if dlg.exec() == SettingsDialog.Accepted:
             self._settings = dlg.to_settings()
             self._config.save(self._settings)
-            # 即時反映できる設定はここで適用する（デバッグ撮影など）
+            # 即時反映できる設定はここで適用する（デバッグ撮影、自動スクショ、開発者バナー）
             self._recording.set_debug_capture(self._settings.recording.debug_capture)
+            self._recording.set_result_capture(
+                self._settings.result_capture.enabled,
+                Path(self._settings.result_capture.output_dir)
+                if self._settings.result_capture.output_dir
+                else None,
+            )
+            self._recording.set_banner_capture(
+                self._settings.developer.banner_capture_enabled,
+                Path(self._settings.developer.banner_dir)
+                if self._settings.developer.banner_dir
+                else None,
+            )
             QMessageBox.information(
                 self,
                 "設定保存",
                 "設定を保存しました。一部の項目はアプリ再起動後に反映されます。",
             )
+
+    def _build_browser_urls(self, settings: AppSettings) -> dict[str, str]:
+        """配信支援ブラウザソースの 4 URL を構築する。"""
+        adv_host = resolve_advertised_host(
+            settings.websocket_server.host,
+            settings.websocket_server.lan_publish,
+        )
+        port = settings.websocket_server.port
+        suffix = ""
+        if settings.websocket_server.lan_publish and settings.websocket_server.token:
+            suffix = f"?token={settings.websocket_server.token}"
+
+        def _u(path: str) -> str:
+            return f"http://{adv_host}:{port}/browser/{path}/{suffix}"
+
+        return {
+            "打鍵数カウンタ": _u("keycount"),
+            "現在のプレイ楽曲": _u("now-playing"),
+            "選曲中の楽曲のスコア履歴 (v1.x はプレースホルダ実装)": _u(
+                "now-playing-history"
+            ),
+            "直近 10 件のプレイ履歴": _u("recent"),
+        }
 
     def _fetch_obs_sources(self, host: str, port: int, password: str) -> list[str]:
         """設定ダイアログからの要求で OBS の入力ソース一覧を取得する。"""

@@ -23,9 +23,12 @@ class RecentResultsPanel(QGroupBox):
 
     @Slot(dict)
     def _on_result(self, payload: dict) -> None:
-        title = payload.get("title") or "（楽曲不明）"
+        # 楽曲名検出失敗（FR-STR-008 / FR-REC-039）時は display_title="検出失敗"
+        # が来る。後方互換で title フィールドのみ来た場合は title を採用、
+        # それも無ければ「（検出失敗）」をフォールバック表示する。
+        display = payload.get("display_title") or payload.get("title") or "（検出失敗）"
         text = (
-            f"{title} / "
+            f"{display} / "
             f"Score {payload.get('score', '?')} "
             f"{payload.get('clear_type', '?')} "
             f"{payload.get('rank', '?')}"

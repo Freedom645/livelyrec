@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <title>LivelyRec - 打鍵カウンタ</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" id="custom-theme" href="">
+</head>
+<body>
+  <div class="livelyrec-keycount" data-lr="root" data-lr-source="keycount">
+    <section class="livelyrec-counter" data-lr="counter">
+      <div class="livelyrec-counter-row" data-lr="cool">
+        <span class="lbl">COOL</span><span class="val" data-lr-val="cool">0</span>
+      </div>
+      <div class="livelyrec-counter-row" data-lr="great">
+        <span class="lbl">GREAT</span><span class="val" data-lr-val="great">0</span>
+      </div>
+      <div class="livelyrec-counter-row" data-lr="good">
+        <span class="lbl">GOOD</span><span class="val" data-lr-val="good">0</span>
+      </div>
+      <div class="livelyrec-counter-row" data-lr="bad">
+        <span class="lbl">BAD</span><span class="val" data-lr-val="bad">0</span>
+      </div>
+      <div class="livelyrec-counter-row livelyrec-counter-total" data-lr="total">
+        <span class="lbl">TOTAL</span><span class="val" data-lr-val="total">0</span>
+      </div>
+    </section>
+    <section class="livelyrec-status" data-lr="status">
+      <span data-lr="ws-status">未接続</span>
+    </section>
+  </div>
+  <script src="../common.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

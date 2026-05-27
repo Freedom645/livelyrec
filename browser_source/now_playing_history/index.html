@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <title>LivelyRec - 選曲中の楽曲のスコア履歴</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" id="custom-theme" href="">
+</head>
+<body>
+  <div class="livelyrec-now-playing-history" data-lr="root"
+       data-lr-source="now-playing-history" data-lr-detection="ok">
+    <h3 data-lr="display-title">—</h3>
+    <p class="livelyrec-note">
+      ※ v1.x ではプレースホルダ実装（「直近プレイ楽曲」のスコア履歴を表示）
+    </p>
+    <table class="livelyrec-history-table">
+      <thead>
+        <tr><th>日時</th><th>スコア</th><th>RANK</th><th>判定</th></tr>
+      </thead>
+      <tbody data-lr="history-list">
+        <tr><td colspan="4" data-lr="empty-row">—</td></tr>
+      </tbody>
+    </table>
+    <p class="livelyrec-status"><span data-lr="ws-status">未接続</span></p>
+  </div>
+  <script src="../common.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

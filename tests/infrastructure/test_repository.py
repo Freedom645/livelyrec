@@ -128,10 +128,13 @@ def test_session_and_result_flow(db: sqlite3.Connection) -> None:
     # best_score
     assert result_repo.best_score("popn-1:HYPER:0") == 87268
 
-    # list_recent
+    # list_recent: 新仕様（RecentEntry を返す。chart_id NULL も含む）
     recent = result_repo.list_recent(limit=5)
     assert recent
-    assert recent[0][0] == session.session_id
+    assert recent[0].session_id == session.session_id
+    assert recent[0].chart_id == "popn-1:HYPER:0"
+    assert recent[0].song_title == "ぽぽぽかレトロード"
+    assert recent[0].score == 87268
 
 
 def test_daily_counter_repo(db: sqlite3.Connection) -> None:
@@ -202,6 +205,135 @@ def test_fuzzy_search_blank_query_returns_empty(db: sqlite3.Connection) -> None:
 
 def test_result_get_missing_returns_none(db: sqlite3.Connection) -> None:
     assert ResultRepository(db).get("does-not-exist") is None
+
+
+def test_play_session_create_with_chart_none_persists_null_chart_id(
+    db: sqlite3.Connection,
+) -> None:
+    """楽曲名検出失敗時は chart=None で作成し、chart_id NULL で永続化される（FR-REC-039）。"""
+    sess_repo = PlaySessionRepository(db)
+    started = datetime(2026, 5, 28, 14, 0, tzinfo=UTC)
+    session = sess_repo.create(
+        chart=None,
+        started_at=started,
+        business_date=date(2026, 5, 28),
+        raw_song_text="ぽ?ぽかれと",
+    )
+    fetched = sess_repo.get(session.session_id)
+    assert fetched is not None
+    assert fetched.chart is None  # 検出失敗セッションは chart None
+    # DB 行を直接見て chart_id が NULL であることを確認
+    row = db.execute(
+        "SELECT chart_id, raw_song_text FROM play_session WHERE session_id = ?",
+        (session.session_id,),
+    ).fetchone()
+    assert row["chart_id"] is None
+    assert row["raw_song_text"] == "ぽ?ぽかれと"
+
+
+def test_result_list_recent_includes_failed_detection_session(
+    db: sqlite3.Connection,
+) -> None:
+    """list_recent は chart_id NULL の検出失敗セッションも返す（FR-STR-009）。"""
+    SongRepository(db).upsert(_make_song())
+    chart = ChartRepository(db).get("popn-1:HYPER:0")
+    assert chart is not None
+    sess_repo = PlaySessionRepository(db)
+    result_repo = ResultRepository(db)
+    # 通常プレイ + 検出失敗プレイの 2 件
+    ok_session = sess_repo.create(
+        chart=chart,
+        started_at=datetime(2026, 5, 28, 14, 0, tzinfo=UTC),
+        business_date=date(2026, 5, 28),
+    )
+    result_repo.upsert(
+        ok_session.session_id,
+        Result(
+            score=80000,
+            judgements=Judgements(200, 10, 3, 1),
+            combo=200,
+            clear_type=ClearType.CLEAR,
+            medal=Medal.CIRCLE,
+            rank=Rank.AAA,
+        ),
+        datetime(2026, 5, 28, 14, 0, tzinfo=UTC),
+    )
+    failed_session = sess_repo.create(
+        chart=None,
+        started_at=datetime(2026, 5, 28, 15, 0, tzinfo=UTC),
+        business_date=date(2026, 5, 28),
+        raw_song_text="?????",
+    )
+    result_repo.upsert(
+        failed_session.session_id,
+        Result(
+            score=50000,
+            judgements=Judgements(100, 5, 1, 0),
+            combo=80,
+            clear_type=ClearType.CLEAR,
+            medal=Medal.CIRCLE,
+            rank=Rank.C,
+        ),
+        datetime(2026, 5, 28, 15, 0, tzinfo=UTC),
+    )
+
+    recent = result_repo.list_recent(limit=5)
+    # 新しい順
+    assert recent[0].session_id == failed_session.session_id
+    assert recent[0].chart_id is None
+    assert recent[0].song_title is None  # 検出失敗は title None
+    assert recent[0].score == 50000
+    assert recent[1].session_id == ok_session.session_id
+    assert recent[1].chart_id == "popn-1:HYPER:0"
+    assert recent[1].song_title == "ぽぽぽかレトロード"
+
+
+def test_result_list_results_for_export_excludes_failed_sessions(
+    db: sqlite3.Connection,
+) -> None:
+    """CSV 用 list_results_for_export は chart_id NULL を含めない。"""
+    SongRepository(db).upsert(_make_song())
+    chart = ChartRepository(db).get("popn-1:HYPER:0")
+    assert chart is not None
+    sess_repo = PlaySessionRepository(db)
+    result_repo = ResultRepository(db)
+    ok = sess_repo.create(
+        chart=chart,
+        started_at=datetime(2026, 5, 28, 14, 0, tzinfo=UTC),
+        business_date=date(2026, 5, 28),
+    )
+    result_repo.upsert(
+        ok.session_id,
+        Result(
+            score=80000,
+            judgements=Judgements(200, 10, 3, 1),
+            combo=200,
+            clear_type=ClearType.CLEAR,
+            medal=Medal.CIRCLE,
+            rank=Rank.AAA,
+        ),
+        datetime(2026, 5, 28, 14, 0, tzinfo=UTC),
+    )
+    failed = sess_repo.create(
+        chart=None,
+        started_at=datetime(2026, 5, 28, 15, 0, tzinfo=UTC),
+        business_date=date(2026, 5, 28),
+    )
+    result_repo.upsert(
+        failed.session_id,
+        Result(
+            score=50000,
+            judgements=Judgements(100, 5, 1, 0),
+            combo=80,
+            clear_type=ClearType.CLEAR,
+            medal=Medal.CIRCLE,
+            rank=Rank.C,
+        ),
+        datetime(2026, 5, 28, 15, 0, tzinfo=UTC),
+    )
+    rows = result_repo.list_results_for_export()
+    assert len(rows) == 1
+    assert rows[0][0] == ok.session_id  # 検出失敗は除外される
 
 
 def test_result_list_by_chart(db: sqlite3.Connection) -> None:

@@ -1,0 +1,49 @@
+/* /browser/now-playing-history/ — 選曲中楽曲（プレースホルダ）のスコア履歴 */
+html, body {
+  margin: 0;
+  padding: 0;
+  background: transparent;
+  color: #fff;
+  font-family: "Yu Gothic UI", "Meiryo", sans-serif;
+}
+
+.livelyrec-now-playing-history {
+  padding: 12px 16px;
+  background: rgba(0, 0, 0, 0.55);
+  border-radius: 8px;
+  width: 440px;
+  box-sizing: border-box;
+}
+
+.livelyrec-now-playing-history h3 {
+  margin: 0 0 6px 0;
+  font-size: 18px;
+  word-break: break-all;
+}
+
+.livelyrec-note { margin: 0 0 8px 0; font-size: 11px; color: #999; }
+
+.livelyrec-history-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.livelyrec-history-table th,
+.livelyrec-history-table td {
+  text-align: left;
+  padding: 3px 6px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.livelyrec-history-table th { color: #ccc; font-weight: normal; }
+
+.livelyrec-status {
+  margin: 8px 0 0 0;
+  font-size: 12px;
+  color: #888;
+}
+
+.livelyrec-now-playing-history[data-lr-detection="failed"] h3 {
+  color: #ff8888;
+}

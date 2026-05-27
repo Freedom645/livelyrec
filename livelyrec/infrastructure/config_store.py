@@ -70,6 +70,31 @@ class LoggingSettings:
 
 
 @dataclass
+class ResultCaptureSettings:
+    """リザルト画面の自動スクリーンショット設定（FR-REC-046〜048）。
+
+    - `enabled`: 有効/無効（既定 False）
+    - `output_dir`: 保存先パス文字列。None または空文字なら AppPaths.result_dir
+      をフォールバックとして使う。
+    """
+
+    enabled: bool = False
+    output_dir: str | None = None
+
+
+@dataclass
+class DeveloperSettings:
+    """開発者支援機能の設定（FR-DEV-001〜004）。
+
+    - `banner_capture_enabled`: リザルト画面のバナー画像保存 ON/OFF（既定 False）
+    - `banner_dir`: 保存先パス文字列。None または空文字なら AppPaths.banner_dir。
+    """
+
+    banner_capture_enabled: bool = False
+    banner_dir: str | None = None
+
+
+@dataclass
 class AppSettings:
     schema_version: int = SCHEMA_VERSION
     obs: ObsSettings = field(default_factory=ObsSettings)
@@ -79,6 +104,8 @@ class AppSettings:
     browser_source: BrowserSourceSettings = field(default_factory=BrowserSourceSettings)
     master: MasterSettings = field(default_factory=MasterSettings)
     logging: LoggingSettings = field(default_factory=LoggingSettings)
+    result_capture: ResultCaptureSettings = field(default_factory=ResultCaptureSettings)
+    developer: DeveloperSettings = field(default_factory=DeveloperSettings)
 
 
 class ConfigStore:
@@ -115,12 +142,25 @@ class ConfigStore:
 
 
 def _from_dict(d: dict) -> AppSettings:
-    """部分的に存在しないキーを既定値で補完して dict から復元する。"""
+    """部分的に存在しないキーを既定値で補完して dict から復元する。
+
+    v1 → v2 マイグレーション: `result_capture` / `developer` セクションが
+    存在しない旧設定ファイルは、`AppSettings()` の既定値で自動補完される。
+    """
     base = AppSettings()
     merged = asdict(base)
     _deep_update(merged, d)
+    # v1 → v2 マイグレーションの観測ログ（schema_version を最新に巻き上げる）
+    incoming_version = merged.get("schema_version")
+    if incoming_version is not None and int(incoming_version) < SCHEMA_VERSION:
+        logger.info(
+            "settings migrated: v%s → v%s (added result_capture / developer)",
+            incoming_version,
+            SCHEMA_VERSION,
+        )
+    merged["schema_version"] = SCHEMA_VERSION
     return AppSettings(
-        schema_version=merged.get("schema_version", SCHEMA_VERSION),
+        schema_version=merged["schema_version"],
         obs=ObsSettings(**merged["obs"]),
         recording=RecordingSettings(**merged["recording"]),
         websocket_server=WebSocketServerSettings(**merged["websocket_server"]),
@@ -128,6 +168,8 @@ def _from_dict(d: dict) -> AppSettings:
         browser_source=BrowserSourceSettings(**merged["browser_source"]),
         master=MasterSettings(**merged["master"]),
         logging=LoggingSettings(**merged["logging"]),
+        result_capture=ResultCaptureSettings(**merged["result_capture"]),
+        developer=DeveloperSettings(**merged["developer"]),
     )
 
 
