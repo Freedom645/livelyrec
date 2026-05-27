@@ -162,7 +162,7 @@
 
 #### 1.4.6. `result.recorded`
 
-リザルト画面の記録完了。
+リザルト画面の記録完了。**楽曲名検出失敗（FR-REC-039）時は `chart: null, display_title: "検出失敗"` で配信する**（payload 構造は同一）。
 
 ```json
 {
@@ -171,7 +171,8 @@
   "schema": "v1",
   "payload": {
     "session_id": "abc...",
-    "chart": { ... },
+    "chart": { ... },                  // 検出失敗時は null
+    "display_title": "ぽぽぽかレトロード",
     "result": {
       "score": 87268,
       "judgements": {"cool": 312, "great": 18, "good": 5, "bad": 2},
@@ -201,6 +202,50 @@
   }
 }
 ```
+
+#### 1.4.8. `now_playing.changed`（新規 / FR-STR-007 ②、FR-STR-008）
+
+「現在のプレイ楽曲」ブラウザソースが購読する通知。プレイ画面突入時／楽曲特定の確定時／検出失敗の確定時にブロードキャストする。
+
+```json
+{
+  "type": "now_playing.changed",
+  "ts": "...",
+  "schema": "v1",
+  "payload": {
+    "session_id": "abc...",
+    "identified": true,
+    "chart": { ... },                  // identified=false の場合 null
+    "display_title": "ぽぽぽかレトロード",
+    "business_date": "2026-05-18"
+  }
+}
+```
+
+楽曲名検出失敗（FR-REC-039）時:
+
+```json
+{
+  "type": "now_playing.changed",
+  "ts": "...",
+  "schema": "v1",
+  "payload": {
+    "session_id": "abc...",
+    "identified": false,
+    "chart": null,
+    "display_title": "検出失敗",
+    "business_date": "2026-05-18"
+  }
+}
+```
+
+| キー | 型 | 内容 |
+|------|----|------|
+| `session_id` | string | 当該プレイセッション |
+| `identified` | bool | 楽曲特定の成否 |
+| `chart` | Chart \| null | 特定成功時のみ詳細を含む |
+| `display_title` | string | 表示用文字列。特定失敗時は **固定文言「検出失敗」** |
+| `business_date` | string | "YYYY-MM-DD" |
 
 ### 1.5. クライアント → サーバ（要求）
 
@@ -251,7 +296,53 @@
 }
 ```
 
-#### 1.5.2. `daily_keycount.request`
+#### 1.5.2. `recent.history.request`（新規 / FR-STR-009、`/browser/recent` 用）
+
+DB 全履歴から最新 N 件のプレイ履歴を要求。
+
+```json
+{
+  "type": "recent.history.request",
+  "ts": "...",
+  "schema": "v1",
+  "payload": {
+    "request_id": "req-003",
+    "limit": 10
+  }
+}
+```
+
+応答: `recent.history.response`
+
+```json
+{
+  "type": "recent.history.response",
+  "ts": "...",
+  "schema": "v1",
+  "payload": {
+    "request_id": "req-003",
+    "entries": [
+      {
+        "session_id": "abc...",
+        "started_at": "2026-05-27T19:30:45+09:00",
+        "chart": { ... },                 // 検出失敗時は null
+        "display_title": "ぽぽぽかレトロード",  // 検出失敗時は "検出失敗"
+        "difficulty": "HYPER",            // 検出失敗時は null
+        "score": 87268,
+        "clear_type": "CLEAR",
+        "rank": "AAA"
+      },
+      ...
+    ]
+  }
+}
+```
+
+- `entries` は時刻降順、最大 `limit` 件。
+- `limit` は省略時 10、許容範囲 1〜50。範囲外は `INVALID_REQUEST` エラー応答。
+- リザルト記録時の `result.recorded` ブロードキャストでクライアント側がリスト先頭に追加する push 更新も行うため、本要求は初回接続時の同期に用いる。
+
+#### 1.5.3. `daily_keycount.request`
 
 業務日累計を要求。
 
@@ -311,17 +402,39 @@
 
 ```
 1. Client → ws://host:port/v1 接続
-   (LAN公開時は Authorization ヘッダ必須)
-2. Server: 接続確立直後に最新の state.changed をスナップショット送信
+   (LAN公開時、settings.json に token 明示設定がある場合のみ Authorization ヘッダ必須)
+2. Server: 接続確立直後に最新の state.changed と now_playing.changed をスナップショット送信
 3. 双方向メッセージ送受
 4. クライアント切断時は何もせず破棄
 ```
 
-### 1.8. バックプレッシャ
+### 1.8. ブラウザソース別の購読・要求パターン
+
+| ブラウザソース | 購読メッセージ | 起動時要求 |
+|----------------|----------------|------------|
+| `/browser/keycount/` | `judgements.tick`, `business_day.rolled`, `state.changed` | `daily_keycount.request` |
+| `/browser/now-playing/` | `now_playing.changed`, `state.changed` | なし（接続時に Server がスナップショット送信） |
+| `/browser/now-playing-history/` | `now_playing.changed`, `result.recorded` | 受信した `chart_id` を起点に `chart.history.request` |
+| `/browser/recent/` | `result.recorded` | `recent.history.request`（limit=10） |
+
+### 1.9. バックプレッシャ
 
 - 送信キュー上限: クライアントごとに **100 件**。
 - 上限超過時は **古いものから破棄** し、WARN ログ出力。
 - これにより配信支援ブラウザソース側のスローダウン時にも本体が詰まらない。
+
+### 1.10. 静的ファイル配信パス（FR-STR-007 / FR-STR-010）
+
+WebSocket Server に併設した HTTP 静的ファイル配信は以下のパス構成とする（v1.x 移行で **既存の `/browser/index.html` 配信は廃止**、404 を返す）。
+
+| URL パス | マウント元 | 用途 |
+|----------|------------|------|
+| `/browser/keycount/` | `browser_source/keycount/index.html` | 打鍵数カウンタ |
+| `/browser/now-playing/` | `browser_source/now_playing/index.html` | 現在のプレイ楽曲 |
+| `/browser/now-playing-history/` | `browser_source/now_playing_history/index.html` | 直近プレイ楽曲のスコア履歴 |
+| `/browser/recent/` | `browser_source/recent/index.html` | 直近 10 件履歴 |
+
+末尾 `/` を含まないアクセス（`/browser/keycount`）は `/browser/keycount/` へ 301 リダイレクト。`/browser/` 直下にはランディングページとして 4 ソースへのリンク集 `index.html` を配置する。
 
 ---
 
@@ -381,9 +494,11 @@ attempt 5: 16秒後
 | ファイル名 | 内容 | 更新タイミング |
 |-----------|------|----------------|
 | `current_state.json` | 現在状態（recording/screen等）と現在カーソル譜面 | state.changed / chart.selected 発火時 |
-| `latest_result.json` | 直近のリザルト1件 | result.recorded 発火時 |
+| `latest_result.json` | 直近のリザルト1件。検出失敗時は `chart: null, display_title: "検出失敗"` | result.recorded 発火時 |
 | `daily_keycount.json` | 当日業務日の累計判定数 | judgements.tick / business_day.rolled 発火時 |
-| `session_in_progress.json` | プレイ中セッション情報 | play.started/judgements.tick |
+| `session_in_progress.json` | プレイ中セッション情報。検出失敗時も同様に出力 | play.started/judgements.tick/now_playing.changed |
+| `now_playing.json` | 現在のプレイ楽曲（display_title を含む）。検出失敗時は `"検出失敗"` | now_playing.changed 発火時 |
+| `recent_history.json` | DB 最新 10 件のプレイ履歴 | result.recorded 発火時に再生成 |
 
 ### 3.3. アトミック書込み
 
@@ -539,3 +654,4 @@ interface ResultPayload {
 |----|------|------|--------|
 | 0.1 | 2026-05-18 | 初版作成 | Claude Code |
 | 0.2 | 2026-05-18 | ファイル出力先をポータブル構成（livelyrec_data/export/）に変更 | Claude Code |
+| 0.3 | 2026-05-27 | v1.x 機能追加: now_playing.changed / recent.history.request/response を新設、result.recorded に display_title を追加（検出失敗時 "検出失敗"）、ブラウザソース URL 構成を 4 ソース独立配信に再定義（§1.10）、§1.8 にソース別購読パターン、ファイル出力に now_playing.json / recent_history.json を追加 | Claude Code |
