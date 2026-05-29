@@ -34,6 +34,14 @@ poc/results/raw/
 poc/results/roi_crops/
 poc/results/digit_recognition/
 
+# PoC #04 出力（KONAMI 著作物のバナー画像本体およびその由来情報を含むため
+# コミット禁止。著作権配慮のためリポジトリには一切含めない。NFR-LEGAL-001）
+poc_out/
+
+# Runtime logs (PyInstaller ビルドログ、アプリ実行ログ等)
+*.log
+build_log.txt
+
 # PaddleOCR モデルキャッシュ
 .paddleocr/
 .paddlex/
