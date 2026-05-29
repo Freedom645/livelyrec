@@ -61,6 +61,7 @@ class SettingsDialog(QDialog):
         tabs.addTab(self._build_browser_tab(), "配信支援")
         tabs.addTab(self._build_update_tab(), "アップデート")
         tabs.addTab(self._build_master_tab(), "マスタ")
+        tabs.addTab(self._build_banner_tab(), "楽曲認識")
 
         buttons = QDialogButtonBox(
             QDialogButtonBox.Ok | QDialogButtonBox.Cancel,
@@ -279,6 +280,52 @@ class SettingsDialog(QDialog):
         layout.addRow("配信元URL:", self._master_url)
         return w
 
+    # ---- 楽曲認識タブ（FR-BAN-003〜009、v2.0） ----
+    def _build_banner_tab(self) -> QWidget:
+        w = QWidget()
+        layout = QFormLayout(w)
+
+        info = QLabel(
+            "バナー画像認識は、リザルト画面の楽曲名 OCR が困難な場合の補助です。\n"
+            "「Wikiからのバナー画像取得」はユーザご自身の責任で、私的複製の範囲で\n"
+            "お使いください。本アプリは KONAMI 公式とは無関係です。"
+        )
+        info.setStyleSheet("color: #555; padding: 4px;")
+        info.setWordWrap(True)
+        layout.addRow(info)
+
+        self._banner_match_enabled = QCheckBox(
+            "バナー特徴量マッチを使用する（楽曲認識の補助）"
+        )
+        self._banner_match_enabled.setChecked(self._settings.banner.match_enabled)
+        layout.addRow("", self._banner_match_enabled)
+
+        self._banner_auto_fetch = QCheckBox(
+            "Wiki から自動でバナー画像を取得する（同意ダイアログを表示）"
+        )
+        self._banner_auto_fetch.setChecked(self._settings.banner.auto_fetch_enabled)
+        layout.addRow("", self._banner_auto_fetch)
+
+        self._banner_endpoint = QLineEdit(self._settings.banner.endpoint_url)
+        self._banner_endpoint.setPlaceholderText(
+            "（既定: 同梱の banner_features.json）"
+        )
+        layout.addRow("特徴量配信URL:", self._banner_endpoint)
+
+        self._banner_cache_dir = QLineEdit(self._settings.banner.cache_dir or "")
+        self._banner_cache_dir.setPlaceholderText(
+            "（既定: livelyrec_data/banners_ref/）"
+        )
+        browse = QPushButton("参照…")
+        browse.clicked.connect(
+            lambda: self._browse_dir_into(self._banner_cache_dir)
+        )
+        cache_row = QHBoxLayout()
+        cache_row.addWidget(self._banner_cache_dir, stretch=1)
+        cache_row.addWidget(browse)
+        layout.addRow("画像キャッシュ先:", cache_row)
+        return w
+
     # ---- 開発者設定セクション（FR-DEV-001） ----
     def _build_developer_section(self) -> QWidget:
         """設定ダイアログ末尾に配置する折りたたみ風の開発者設定セクション。"""
@@ -407,6 +454,13 @@ class SettingsDialog(QDialog):
                 s.developer,
                 banner_capture_enabled=self._dev_banner_enabled.isChecked(),
                 banner_dir=(self._dev_banner_dir.text().strip() or None),
+            ),
+            banner=replace(
+                s.banner,
+                match_enabled=self._banner_match_enabled.isChecked(),
+                auto_fetch_enabled=self._banner_auto_fetch.isChecked(),
+                endpoint_url=self._banner_endpoint.text().strip(),
+                cache_dir=(self._banner_cache_dir.text().strip() or None),
             ),
         )
         return new

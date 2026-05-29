@@ -244,15 +244,10 @@ class MainWindow(QMainWindow):
             QMessageBox.warning(self, "失敗", str(e))
 
     def _on_about(self) -> None:
-        from livelyrec import __version__
-        QMessageBox.about(
-            self,
-            "LivelyRec について",
-            f"LivelyRec v{__version__}\n"
-            "pop'n music lively スコア記録・配信支援アプリ\n\n"
-            "pop'n music は KONAMI Amusement の登録商標です。\n"
-            "本ソフトウェアは KONAMI Amusement とは関係ありません（非公式ツール）。",
-        )
+        # v2.0: バナー画像参照元の出典属性表示と免責表示を含む AboutDialog を使用
+        # （FR-BAN-008）。リッチテキスト対応のため独立ダイアログ。
+        from livelyrec.ui.about_dialog import AboutDialog
+        AboutDialog(self).exec()
 
     # ---- エラー表示 ----
     @Slot(dict)
