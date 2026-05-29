@@ -62,7 +62,18 @@ USER_AGENT = (
 
 REMYWIKI_API = "https://remywiki.com/api.php"
 FANDOM_API = "https://popnmusic.fandom.com/api.php"
-LIVELY_PAGE = "CS_pnm_Lively"
+
+# 収集起点ページ群（v3、2026-05-29）。
+# CS_pnm_Lively だけだと AC peace 以降で初登場した lively 収録曲（例: 革命パッショネイト）が
+# 漏れるため、最近の AC pnm シリーズページも起点に加えて和集合を取る。
+# 各ページから抽出したリンク群は重複除去後、is_song_page() で楽曲ページのみに絞られる。
+LIVELY_SOURCE_PAGES: tuple[str, ...] = (
+    "CS_pnm_Lively",
+    "AC_pnm_peace",
+    "AC_pnm_UniLab",
+    "AC_pnm_Jam&Fizz",
+    "AC_pnm_Kaimei_Riddles",
+)
 
 EXCLUDE_PREFIXES = (
     "AC pnm",
@@ -107,14 +118,14 @@ def http_bytes(url: str, timeout: float = 60.0) -> bytes:
         return resp.read()
 
 
-def fetch_lively_page_links(rate_sec: float) -> list[str]:
-    """CS_pnm_Lively ページの全リンクを取得する。"""
+def fetch_page_links(page_title: str, rate_sec: float) -> list[str]:
+    """指定 MediaWiki ページの全リンクを取得する（continue 対応）。"""
     titles: list[str] = []
     plcontinue: str | None = None
     while True:
         url = (
             f"{REMYWIKI_API}?action=query&format=json&prop=links"
-            f"&titles={quote(LIVELY_PAGE)}&pllimit=500"
+            f"&titles={quote(page_title)}&pllimit=500"
         )
         if plcontinue:
             url += f"&plcontinue={quote(plcontinue)}"
@@ -127,6 +138,35 @@ def fetch_lively_page_links(rate_sec: float) -> list[str]:
         if not plcontinue:
             break
         time.sleep(rate_sec)
+    return titles
+
+
+def fetch_lively_page_links(rate_sec: float) -> list[str]:
+    """LIVELY_SOURCE_PAGES の全リンクを和集合（重複除去）で取得する。
+
+    CS_pnm_Lively だけだと AC peace 以降で初登場した楽曲（例: 革命パッショネイト）が
+    漏れるため、複数の AC pnm シリーズページも起点に加える。
+    """
+    seen: set[str] = set()
+    titles: list[str] = []
+    for i, page in enumerate(LIVELY_SOURCE_PAGES):
+        logger.info(
+            "fetching links from [%d/%d] %s ...",
+            i + 1, len(LIVELY_SOURCE_PAGES), page,
+        )
+        page_titles = fetch_page_links(page, rate_sec)
+        added = 0
+        for t in page_titles:
+            if t not in seen:
+                seen.add(t)
+                titles.append(t)
+                added += 1
+        logger.info(
+            "  %s: %d links (+%d new, total %d)",
+            page, len(page_titles), added, len(titles),
+        )
+        if i < len(LIVELY_SOURCE_PAGES) - 1:
+            time.sleep(rate_sec)
     return titles
 
 
@@ -238,6 +278,87 @@ def extract_artist_candidates(wikitext: str) -> list[str]:
         if value:
             out.append(value)
     return out
+
+
+# === master.json enrich 機能（v3、--enrich-master オプション） ===
+# `{{pnm Chart|pop'n music Lively|EASY|NORMAL|HYPER|EX|BAT_N|BAT_H}}` から
+# 各譜面のレベルを抽出する。Lively 行は通常譜面と UPPER 譜面それぞれの
+# Chart Header 内に 1 回ずつ出現する（UPPER 譜面ありの場合）。
+_PNM_CHART_LIVELY_RE = re.compile(
+    r"\{\{\s*pnm\s+Chart\s*\|\s*pop'?n\s+music\s+Lively\s*\|"
+    r"\s*([^|\}]*)\|\s*([^|\}]*)\|\s*([^|\}]*)\|\s*([^|\}]*)"
+    r"(?:\|\s*([^|\}]*)\|\s*([^|\}]*))?"
+    r"\s*\}\}",
+    re.IGNORECASE,
+)
+_PNM_CHART_HEADER_RE = re.compile(r"\{\{\s*pnm\s+Chart\s+Header\b", re.IGNORECASE)
+_GENRE_FULL_RE = re.compile(
+    r"Genre:\s*([^<\n(]+?)(?:\s*\(\s*([^)]+?)\s*\))?\s*<br>",
+    re.IGNORECASE,
+)
+
+
+def _parse_level(text: str) -> int | None:
+    """`12` / `↑29` / `&uarr;29` / `-` から数値だけ抽出。
+
+    `-` や空文字や非数字は None。HTML エンティティの装飾矢印を含む値も
+    数字列を取り出して整数化する。
+    """
+    text = text.strip()
+    if not text or text in ("-", "?"):
+        return None
+    m = re.search(r"\d+", text)
+    return int(m.group(0)) if m else None
+
+
+def extract_lively_charts(wikitext: str) -> tuple[list[dict], bool]:
+    """pop'n music Lively の譜面情報（EASY/NORMAL/HYPER/EX）と UPPER 有無を返す。
+
+    UPPER 譜面の有無は `{{pnm Chart Header}}` テンプレートが 2 回出現することで
+    判定する（remywiki の慣例）。Lively 行は通常 Header と UPPER Header に
+    1 行ずつ出るため、`_PNM_CHART_LIVELY_RE.findall()` の 1 つ目が通常、
+    2 つ目が UPPER と扱う。
+
+    Returns:
+        (charts, has_upper)
+        charts は normal 4 件 + （UPPER があれば）upper 4 件 のリスト。
+        各 chart は ``{"difficulty": str, "is_upper": bool, "level": int|None}``。
+    """
+    matches = list(_PNM_CHART_LIVELY_RE.finditer(wikitext))
+    if not matches:
+        return [], False
+    header_count = len(_PNM_CHART_HEADER_RE.findall(wikitext))
+    has_upper = header_count >= 2 and len(matches) >= 2
+
+    diffs = ("EASY", "NORMAL", "HYPER", "EX")
+    out: list[dict] = []
+    # 通常譜面（1 行目）
+    m = matches[0]
+    for diff, idx in zip(diffs, range(1, 5), strict=True):
+        out.append({
+            "difficulty": diff,
+            "is_upper": False,
+            "level": _parse_level(m.group(idx) or ""),
+        })
+    if has_upper:
+        m = matches[1]
+        for diff, idx in zip(diffs, range(1, 5), strict=True):
+            out.append({
+                "difficulty": diff,
+                "is_upper": True,
+                "level": _parse_level(m.group(idx) or ""),
+            })
+    return out, has_upper
+
+
+def extract_genre_pair(wikitext: str) -> tuple[str | None, str | None]:
+    """Genre 行から (英字ジャンル名, 日本語ジャンル名) のタプルを返す。"""
+    m = _GENRE_FULL_RE.search(wikitext)
+    if not m:
+        return None, None
+    en = (m.group(1) or "").strip() or None
+    ja = (m.group(2) or "").strip() or None
+    return en, ja
 
 
 def find_banner_file_in_wikitext(wikitext: str) -> str | None:
@@ -371,6 +492,15 @@ def main(argv: list[str]) -> int:
         "--score-cutoff", type=int, default=85,
         help="rapidfuzz WRatio の閾値（v2 既定 85、ローマ字読み楽曲を救うため緩和）",
     )
+    p.add_argument(
+        "--enrich-master", action="store_true",
+        help="マッチした楽曲ページの wikitext から Lively 譜面レベル・ジャンル名・"
+             "UPPER 譜面有無を抽出し、`--master-json` を上書き更新する（v3、開発者ツール）",
+    )
+    p.add_argument(
+        "--master-out", type=Path, default=None,
+        help="--enrich-master 時の出力先（既定: --master-json と同じパスへ上書き）",
+    )
     p.add_argument("-v", "--verbose", action="store_true")
     args = p.parse_args(argv)
 
@@ -383,9 +513,18 @@ def main(argv: list[str]) -> int:
     master_songs = master_doc.get("songs", [])
     logger.info("master songs: %d", len(master_songs))
 
-    logger.info("fetching CS_pnm_Lively page links...")
+    # --enrich-master 用の集計カウンタ
+    enrich_stats = {"genre": 0, "charts": 0, "upper": 0}
+    if args.enrich_master:
+        logger.info("master enrich mode ON (genre/charts/upper を Wiki から補完)")
+
+    logger.info("fetching links from %d source pages...", len(LIVELY_SOURCE_PAGES))
     all_titles = fetch_lively_page_links(rate_sec=args.rate_sec)
     candidates = [t for t in all_titles if is_song_candidate(t)]
+    logger.info(
+        "candidates: %d (after dedup & meta-link filter, from %d raw links)",
+        len(candidates), len(all_titles),
+    )
     if args.limit > 0:
         candidates = candidates[: args.limit]
     logger.info("song candidates: %d", len(candidates))
@@ -471,6 +610,23 @@ def main(argv: list[str]) -> int:
             hex_from_hash(ph),
         )
 
+        # --enrich-master: 同じ wikitext から master 拡張情報を抽出して反映
+        if args.enrich_master:
+            genre_en, genre_jp = extract_genre_pair(wikitext)
+            new_charts, has_upper = extract_lively_charts(wikitext)
+            if genre_en or genre_jp:
+                # 既存値より新規取得値を優先（再生成時は最新）
+                song["genre"] = genre_en or song.get("genre")
+                if genre_jp:
+                    song["genre_jp"] = genre_jp
+                enrich_stats["genre"] += 1
+            if new_charts:
+                song["charts"] = new_charts
+                enrich_stats["charts"] += 1
+            if has_upper:
+                song["has_upper"] = True
+                enrich_stats["upper"] += 1
+
     # 出力
     out_doc = {
         "version": datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%SZ"),
@@ -498,6 +654,21 @@ def main(argv: list[str]) -> int:
                 reason_e = reason.replace('"', '""')
                 f.write(f'"{page_e}","{reason_e}",{score}\n')
         logger.info("wrote %d unmatched entries to %s", len(unmatched), args.unmatched_csv)
+
+    # --enrich-master: master.json を保存
+    if args.enrich_master:
+        out_path = args.master_out or args.master_json
+        master_doc["version"] = datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%SZ")
+        out_path.parent.mkdir(parents=True, exist_ok=True)
+        out_path.write_text(
+            json.dumps(master_doc, ensure_ascii=False, indent=2), encoding="utf-8"
+        )
+        logger.info(
+            "enriched master saved to %s "
+            "(genre=%d, charts=%d, upper=%d)",
+            out_path,
+            enrich_stats["genre"], enrich_stats["charts"], enrich_stats["upper"],
+        )
 
     return 0
 
