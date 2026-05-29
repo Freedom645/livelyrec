@@ -116,67 +116,24 @@ def test_main_window_smoke(qtbot, tmp_path: Path) -> None:
 
 
 def test_settings_dialog_has_banner_tab(qtbot) -> None:
-    """設定ダイアログに「楽曲認識」タブが存在し、banner 設定を読み書きできる。"""
+    """設定ダイアログに「楽曲認識」タブが存在し、banner 設定を読み書きできる。
+
+    v0.8 でアプリは画像本体を扱わない方針に変更されたため、設定項目は
+    match_enabled / endpoint_url の 2 つのみ。
+    """
     s = AppSettings()
     s.banner.match_enabled = True
-    s.banner.auto_fetch_enabled = False
     s.banner.endpoint_url = "https://example.invalid/banner_features.json"
-    s.banner.cache_dir = "C:/tmp/banners_ref"
     dlg = SettingsDialog(s)
     qtbot.addWidget(dlg)
     assert dlg._banner_match_enabled.isChecked() is True
-    assert dlg._banner_auto_fetch.isChecked() is False
     assert dlg._banner_endpoint.text() == "https://example.invalid/banner_features.json"
-    assert dlg._banner_cache_dir.text() == "C:/tmp/banners_ref"
 
     # UI 変更が to_settings() に反映される
     dlg._banner_match_enabled.setChecked(False)
-    dlg._banner_auto_fetch.setChecked(True)
     out = dlg.to_settings()
     assert out.banner.match_enabled is False
-    assert out.banner.auto_fetch_enabled is True
     assert out.banner.endpoint_url == "https://example.invalid/banner_features.json"
-    assert out.banner.cache_dir == "C:/tmp/banners_ref"
-
-
-def test_settings_dialog_banner_cache_dir_empty_normalized(qtbot) -> None:
-    """空文字の cache_dir は None として保存される。"""
-    s = AppSettings()
-    dlg = SettingsDialog(s)
-    qtbot.addWidget(dlg)
-    dlg._banner_cache_dir.setText("")
-    out = dlg.to_settings()
-    assert out.banner.cache_dir is None
-
-
-def test_banner_consent_dialog_records_timestamp(qtbot) -> None:
-    """同意ダイアログ accept 時に consented_at が ISO8601 文字列で取れる。"""
-    from livelyrec.ui.banner_consent_dialog import BannerConsentDialog
-    dlg = BannerConsentDialog()
-    qtbot.addWidget(dlg)
-    assert dlg.consented_at is None
-    dlg.accept()
-    assert dlg.consented_at is not None
-    assert dlg.consented_at.endswith("Z")
-    assert "T" in dlg.consented_at
-
-
-def test_banner_consent_dialog_rejection_keeps_none(qtbot) -> None:
-    """キャンセル時は consented_at が None のまま。"""
-    from livelyrec.ui.banner_consent_dialog import BannerConsentDialog
-    dlg = BannerConsentDialog()
-    qtbot.addWidget(dlg)
-    dlg.reject()
-    assert dlg.consented_at is None
-
-
-def test_banner_consent_dialog_do_not_show_again_toggle(qtbot) -> None:
-    from livelyrec.ui.banner_consent_dialog import BannerConsentDialog
-    dlg = BannerConsentDialog()
-    qtbot.addWidget(dlg)
-    assert dlg.do_not_show_again is False
-    dlg._do_not_show_again.setChecked(True)
-    assert dlg.do_not_show_again is True
 
 
 def test_about_dialog_contains_konami_disclaimer(qtbot) -> None:

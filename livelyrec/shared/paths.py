@@ -34,7 +34,6 @@ class AppPaths:
     debug_dir: Path
     result_dir: Path     # リザルト自動スクショ既定先（FR-REC-046）
     banner_dir: Path     # 開発者向けバナー画像既定先（FR-DEV-002）
-    banners_ref_dir: Path  # バナー参照画像ローカルキャッシュ既定先（FR-BAN-005、v2.0）
     templates_dir: Path
     browser_source_dir: Path
     master_seed_file: Path
@@ -57,7 +56,7 @@ class AppPaths:
         data.mkdir(exist_ok=True)
         for sub in (
             "db", "logs", "export", "crash", "debug",
-            "result", "banner", "banners_ref",
+            "result", "banner",
         ):
             (data / sub).mkdir(exist_ok=True)
 
@@ -73,7 +72,6 @@ class AppPaths:
             debug_dir=data / "debug",
             result_dir=data / "result",
             banner_dir=data / "banner",
-            banners_ref_dir=data / "banners_ref",
             templates_dir=bundle / "templates",
             browser_source_dir=bundle / "browser_source",
             master_seed_file=bundle / "data" / "master.json",

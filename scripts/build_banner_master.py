@@ -1,5 +1,10 @@
 """バナー特徴量マスタ JSON 生成スクリプト（FR-BAN-003, FR-BAN-011, v2.0）。
 
+★ 開発者専用ツール ★
+本スクリプトは **開発者の作業環境でのみ実行するツール** であり、エンドユーザは
+実行しない。アプリのランタイム動作とは独立しており、生成物
+（data/banner_features.json、数値ハッシュのみ）を GitHub Releases に同梱配布する。
+
 詳細: docs/design/11_詳細設計_バナー認識.md §4
 
 remywiki.com および popnmusic.fandom.com の各楽曲ページから:
@@ -8,17 +13,18 @@ remywiki.com および popnmusic.fandom.com の各楽曲ページから:
 2. 各曲ページ wikitext を MediaWiki API で取得
 3. Infobox から **原タイトル（Japanese title）** を抽出
 4. master.json と rapidfuzz マッチで突合
-5. 画像 URL を取得 → ローカルキャッシュ DL
+5. 画像 URL を取得 → 開発者ローカル一時キャッシュへ DL
 6. 390×94 リサイズ正規化 → pHash/dHash 計算
-7. data/banner_features.json 出力
+7. data/banner_features.json 出力（ハッシュ値のみ。画像本体はコミット対象外）
 
-画像本体はユーザ PC ローカルキャッシュのみ保存し、配布物（リポジトリ・
-PyInstaller 出力）には含めない（NFR-LEGAL-001 / 005）。
+要件 v0.8（2026-05-29）でアプリのランタイム動作からはバナー画像本体を完全
+排除した。ローカル DL する画像本体は本スクリプトの作業用一時ファイルであり、
+.gitignore で除外され配布物・リポジトリには一切含まれない（NFR-LEGAL-001 / 005）。
 
-Usage:
+Usage（開発者環境のみ）:
     python scripts/build_banner_master.py \\
         --master-json data/master.json \\
-        --cache-dir livelyrec_data/banners_ref \\
+        --cache-dir poc_out/banners_ref \\
         --out data/banner_features.json \\
         --limit 50
 """

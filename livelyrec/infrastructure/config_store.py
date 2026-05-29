@@ -96,20 +96,18 @@ class DeveloperSettings:
 
 @dataclass
 class BannerSettings:
-    """バナー画像認識（2 次認識器）の設定（FR-BAN-003〜009、v2.0）。
+    """バナー画像認識（2 次認識器）の設定（FR-BAN-003, FR-BAN-004、v2.0/v0.8）。
 
     - `match_enabled`: バナー特徴量マッチを使う ON/OFF（既定 True）
-    - `auto_fetch_enabled`: Wiki からの自動収集 ON/OFF（既定 False、同意要）
     - `endpoint_url`: `banner_features.json` の配信エンドポイント
       （GitHub Releases 等）。空文字なら同梱 seed のみで動作
-    - `cache_dir`: 画像本体のローカルキャッシュ先。None なら AppPaths
-      の既定（`livelyrec_data/banners_ref/`）
+
+    要件 v0.8 でバナー画像本体をアプリのランタイム動作からも完全に排除した
+    ため、`auto_fetch_enabled` / `cache_dir` は廃止された。
     """
 
     match_enabled: bool = True
-    auto_fetch_enabled: bool = False
     endpoint_url: str = ""
-    cache_dir: str | None = None
 
 
 @dataclass
@@ -189,8 +187,18 @@ def _from_dict(d: dict) -> AppSettings:
         logging=LoggingSettings(**merged["logging"]),
         result_capture=ResultCaptureSettings(**merged["result_capture"]),
         developer=DeveloperSettings(**merged["developer"]),
-        banner=BannerSettings(**merged["banner"]),
+        banner=BannerSettings(**_filter_banner_dict(merged["banner"])),
     )
+
+
+def _filter_banner_dict(d: dict) -> dict:
+    """旧 settings.json の `auto_fetch_enabled` / `cache_dir` キーを無視する。
+
+    要件 v0.8（2026-05-29）でバナー画像本体をアプリのランタイム動作から
+    排除した際に廃止したキー。旧設定ファイルにこれらが残っていてもエラーに
+    せず読み飛ばす（後方互換）。
+    """
+    return {k: v for k, v in d.items() if k in {"match_enabled", "endpoint_url"}}
 
 
 def _deep_update(target: dict, src: dict) -> None:

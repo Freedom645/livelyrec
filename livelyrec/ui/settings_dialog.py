@@ -280,15 +280,15 @@ class SettingsDialog(QDialog):
         layout.addRow("配信元URL:", self._master_url)
         return w
 
-    # ---- 楽曲認識タブ（FR-BAN-003〜009、v2.0） ----
+    # ---- 楽曲認識タブ（FR-BAN-003 / FR-BAN-004、v2.0/v0.8） ----
     def _build_banner_tab(self) -> QWidget:
         w = QWidget()
         layout = QFormLayout(w)
 
         info = QLabel(
             "バナー画像認識は、リザルト画面の楽曲名 OCR が困難な場合の補助です。\n"
-            "「Wikiからのバナー画像取得」はユーザご自身の責任で、私的複製の範囲で\n"
-            "お使いください。本アプリは KONAMI 公式とは無関係です。"
+            "アプリは特徴量ハッシュ値のみを扱い、バナー画像本体は配布物にも\n"
+            "ユーザ PC にも一切保存しません。本アプリは KONAMI 公式とは無関係です。"
         )
         info.setStyleSheet("color: #555; padding: 4px;")
         info.setWordWrap(True)
@@ -300,30 +300,11 @@ class SettingsDialog(QDialog):
         self._banner_match_enabled.setChecked(self._settings.banner.match_enabled)
         layout.addRow("", self._banner_match_enabled)
 
-        self._banner_auto_fetch = QCheckBox(
-            "Wiki から自動でバナー画像を取得する（同意ダイアログを表示）"
-        )
-        self._banner_auto_fetch.setChecked(self._settings.banner.auto_fetch_enabled)
-        layout.addRow("", self._banner_auto_fetch)
-
         self._banner_endpoint = QLineEdit(self._settings.banner.endpoint_url)
         self._banner_endpoint.setPlaceholderText(
             "（既定: 同梱の banner_features.json）"
         )
         layout.addRow("特徴量配信URL:", self._banner_endpoint)
-
-        self._banner_cache_dir = QLineEdit(self._settings.banner.cache_dir or "")
-        self._banner_cache_dir.setPlaceholderText(
-            "（既定: livelyrec_data/banners_ref/）"
-        )
-        browse = QPushButton("参照…")
-        browse.clicked.connect(
-            lambda: self._browse_dir_into(self._banner_cache_dir)
-        )
-        cache_row = QHBoxLayout()
-        cache_row.addWidget(self._banner_cache_dir, stretch=1)
-        cache_row.addWidget(browse)
-        layout.addRow("画像キャッシュ先:", cache_row)
         return w
 
     # ---- 開発者設定セクション（FR-DEV-001） ----
@@ -458,9 +439,7 @@ class SettingsDialog(QDialog):
             banner=replace(
                 s.banner,
                 match_enabled=self._banner_match_enabled.isChecked(),
-                auto_fetch_enabled=self._banner_auto_fetch.isChecked(),
                 endpoint_url=self._banner_endpoint.text().strip(),
-                cache_dir=(self._banner_cache_dir.text().strip() or None),
             ),
         )
         return new
