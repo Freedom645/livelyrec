@@ -80,6 +80,10 @@ class MasterService:
         """DB に登録済みの楽曲数を返す。"""
         return self._song.count()
 
+    def get_song(self, song_id: str) -> Song | None:
+        """song_id から Song を取得する（バナー特徴量マッチからの逆引き用、FR-BAN-001）。"""
+        return self._song.get(song_id)
+
     def identify(
         self,
         raw_text: str,

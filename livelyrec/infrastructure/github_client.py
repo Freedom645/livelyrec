@@ -11,7 +11,7 @@ from pathlib import Path
 
 import requests
 
-from livelyrec.shared.exceptions import MasterFetchError, UpdateCheckError
+from livelyrec.shared.exceptions import BannerFeaturesFetchError, MasterFetchError, UpdateCheckError
 
 logger = logging.getLogger("livelyrec.github")
 
@@ -132,3 +132,75 @@ class MasterFetcher:
             except (OSError, ValueError):
                 pass
         raise MasterFetchError(str(original_error)) from original_error
+
+
+class BannerFeaturesFetcher:
+    """バナー特徴量 JSON を GitHub Releases / Pages 等から取得する。
+
+    詳細: docs/design/11_詳細設計_バナー認識.md §5.4
+
+    ETag キャッシュ対応。`MasterFetcher` と同パターンで、取得失敗時はキャッシュへ
+    フォールバックする。本機能は必須ではないため、取得もキャッシュも無い場合は
+    BannerFeaturesFetchError を投げ、呼び出し側はそれを許容して seed JSON 等へ
+    フォールバックする運用とする（FR-BAN-004）。
+    """
+
+    def __init__(
+        self,
+        endpoint_url: str,
+        cache_path: Path,
+        user_agent: str = "LivelyRec",
+    ) -> None:
+        self._url = endpoint_url
+        self._cache_path = cache_path
+        self._etag_path = cache_path.with_suffix(cache_path.suffix + ".etag")
+        self._ua = user_agent
+
+    def fetch(self, timeout: float = 30.0) -> dict:
+        """バナー特徴量 JSON を取得する。失敗時はキャッシュ、それもなければ例外。"""
+        headers = {"User-Agent": self._ua}
+        if self._etag_path.exists():
+            try:
+                headers["If-None-Match"] = self._etag_path.read_text(encoding="utf-8").strip()
+            except OSError:
+                pass
+        try:
+            resp = requests.get(self._url, headers=headers, timeout=timeout)
+        except Exception as e:
+            logger.warning("banner features fetch failed: %s", e)
+            return self._load_cache_or_raise(e)
+        if resp.status_code == 304 and self._cache_path.exists():
+            logger.info("banner features not modified (304), using cache")
+            return self._load_cache_or_raise(
+                BannerFeaturesFetchError("304 but no cache")
+            )
+        if not resp.ok:
+            return self._load_cache_or_raise(
+                BannerFeaturesFetchError(f"HTTP {resp.status_code}")
+            )
+        try:
+            data = resp.json()
+        except ValueError as e:
+            return self._load_cache_or_raise(e)
+        try:
+            self._cache_path.parent.mkdir(parents=True, exist_ok=True)
+            self._cache_path.write_text(resp.text, encoding="utf-8")
+            etag = resp.headers.get("ETag")
+            if etag:
+                self._etag_path.write_text(etag, encoding="utf-8")
+        except OSError as e:
+            logger.warning("failed to write banner features cache: %s", e)
+        return data
+
+    @property
+    def cache_path(self) -> Path:
+        return self._cache_path
+
+    def _load_cache_or_raise(self, original_error: Exception) -> dict:
+        if self._cache_path.exists():
+            try:
+                import json
+                return json.loads(self._cache_path.read_text(encoding="utf-8"))
+            except (OSError, ValueError):
+                pass
+        raise BannerFeaturesFetchError(str(original_error)) from original_error

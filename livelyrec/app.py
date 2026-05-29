@@ -121,6 +121,68 @@ def _show_data_folder_error(paths: AppPaths, message: str) -> None:
         print(f"[fatal] {message}", file=sys.stderr)
 
 
+def _build_banner_match_service(
+    settings,
+    paths: AppPaths,
+    logger: logging.Logger,
+    *,
+    fetcher_cls,
+    service_cls,
+    load_error,
+    fetch_error,
+):
+    """v2.0 バナー特徴量マッチサービスを組み立てる（FR-BAN-001〜004）。
+
+    優先順:
+    1. ユーザ設定で `banner.match_enabled=False` → None（機能無効）
+    2. `banner.endpoint_url` 設定時はそこから取得（ETag 差分対応）
+    3. 取得失敗時はローカルキャッシュ（`banner_features_cache_file`）
+    4. それも無ければ同梱 seed（`banner_features_seed_file`）
+    5. seed も無ければ None（機能無効）
+
+    失敗・パースエラーは WARN ログのみで、本体起動はブロックしない（FR-BAN-001）。
+    """
+    if not settings.banner.match_enabled:
+        logger.info("banner match disabled by config")
+        return None
+    fetcher = None
+    if settings.banner.endpoint_url:
+        fetcher = fetcher_cls(
+            endpoint_url=settings.banner.endpoint_url,
+            cache_path=paths.banner_features_cache_file,
+        )
+        try:
+            fetcher.fetch()
+            logger.info(
+                "banner features fetched/refreshed from %s",
+                settings.banner.endpoint_url,
+            )
+        except fetch_error:
+            logger.warning(
+                "banner features fetch failed; falling back to cache/seed",
+                exc_info=True,
+            )
+    candidate_paths = []
+    if settings.banner.endpoint_url:
+        candidate_paths.append(paths.banner_features_cache_file)
+    candidate_paths.append(paths.banner_features_seed_file)
+    for path in candidate_paths:
+        if not path.exists():
+            continue
+        try:
+            svc = service_cls.from_json(path)
+            logger.info(
+                "banner match service ready: %d features from %s",
+                svc.feature_count,
+                path,
+            )
+            return svc
+        except load_error:
+            logger.warning("banner features load failed: %s", path, exc_info=True)
+    logger.info("banner features unavailable; 2nd identifier disabled")
+    return None
+
+
 def _install_excepthook(paths: AppPaths) -> None:
     def excepthook(exc_type, exc_value, exc_tb):
         logging.getLogger("livelyrec").critical(
@@ -198,13 +260,22 @@ def main() -> int:
 
     # サービス層
     from livelyrec.application.analysis_service import AnalysisService
+    from livelyrec.application.banner_match_service import (
+        BannerFeaturesLoadError,
+        BannerMatchService,
+    )
     from livelyrec.application.export_service import ExportService
     from livelyrec.application.master_service import MasterService
     from livelyrec.application.recording_service import RecordingService
     from livelyrec.application.update_service import UpdateService
     from livelyrec.domain.state import StateMachine
-    from livelyrec.infrastructure.github_client import GitHubClient, MasterFetcher
+    from livelyrec.infrastructure.github_client import (
+        BannerFeaturesFetcher,
+        GitHubClient,
+        MasterFetcher,
+    )
     from livelyrec.infrastructure.obs_client import OBSClient, ObsConfig
+    from livelyrec.shared.exceptions import BannerFeaturesFetchError
 
     master_fetcher = (
         MasterFetcher(
@@ -233,8 +304,18 @@ def main() -> int:
                 logger.exception("master seed load failed")
         else:
             logger.warning("master seed file not found: %s", paths.master_seed_file)
+    # バナー特徴量マスタの取得とサービス組み立て（FR-BAN-001〜004、v2.0）。
+    # 取得失敗・パース失敗・設定 OFF いずれも 2 次認識器を無効化して既存処理で継続。
+    banner_match = _build_banner_match_service(
+        settings, paths, logger,
+        fetcher_cls=BannerFeaturesFetcher,
+        service_cls=BannerMatchService,
+        load_error=BannerFeaturesLoadError,
+        fetch_error=BannerFeaturesFetchError,
+    )
+
     state = StateMachine()
-    analysis = AnalysisService(pipeline, state, master)
+    analysis = AnalysisService(pipeline, state, master, banner_match=banner_match)
 
     obs = OBSClient(ObsConfig(
         host=settings.obs.host,

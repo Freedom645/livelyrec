@@ -10,14 +10,16 @@ from dataclasses import dataclass
 
 import numpy as np
 
-from livelyrec.domain.score import Chart, Judgements
+from livelyrec.domain.score import Chart, Difficulty, Judgements
 from livelyrec.domain.state import ScreenType, StateMachine
 from livelyrec.infrastructure.recognizer.pipeline import RecognitionPipeline
 from livelyrec.infrastructure.recognizer.retry_detector import (
     PlayFrameSnapshot,
     RetryDetector,
 )
+from livelyrec.infrastructure.recognizer.roi_defs import RESULT_ROI
 
+from .banner_match_service import BannerMatchService
 from .master_service import MasterService, SongStabilizer
 
 logger = logging.getLogger("livelyrec.analysis")
@@ -88,6 +90,7 @@ class AnalysisService:
         state_machine: StateMachine,
         master: MasterService,
         identification_fail_after: int = 5,
+        banner_match: BannerMatchService | None = None,
     ) -> None:
         self._pipeline = pipeline
         self._state = state_machine
@@ -98,6 +101,8 @@ class AnalysisService:
         self._last_raw_song_text: str | None = None
         # 楽曲名 OCR の連続失敗を観測して「検出失敗」を確定させる（FR-REC-039）
         self._id_tracker = SongIdentificationTracker(fail_after=identification_fail_after)
+        # 2 次認識器: バナー特徴量マッチ（FR-BAN-001、v2.0）
+        self._banner_match = banner_match
 
     def analyze(self, frame_bgr: np.ndarray) -> AnalysisResult:
         # 楽曲特定済み or 検出失敗確定済みなら楽曲名 OCR をスキップして
@@ -172,6 +177,19 @@ class AnalysisService:
 
         if screen == ScreenType.RESULT and analysis.result_metrics is not None:
             rm = analysis.result_metrics
+            # 2 次認識器: プレイ画面 OCR キャッシュが取れていない場合に
+            # バナー特徴量マッチで楽曲を特定する（FR-BAN-001、v2.0）。
+            # 既に特定済 or 検出失敗確定なら呼び出さない。
+            if (
+                self._last_chart is None
+                and not self._id_tracker.is_confirmed_failed()
+                and self._banner_match is not None
+            ):
+                # RESULT 画面の ResultMetrics には difficulty が含まれないため
+                # ヒントなしで譜面選択させる（HYPER 優先のフォールバック）
+                chart = self._identify_by_banner(frame_bgr, difficulty_hint=None)
+                if chart is not None:
+                    self._last_chart = chart
             return AnalysisResult(
                 screen=screen,
                 confidence=analysis.detection.confidence,
@@ -201,3 +219,62 @@ class AnalysisService:
         self._last_chart = None
         self._last_raw_song_text = None
         self._id_tracker.reset()
+
+    def _identify_by_banner(
+        self,
+        frame_bgr: np.ndarray,
+        difficulty_hint: Difficulty | None,
+    ) -> Chart | None:
+        """RESULT 画面のバナー領域から楽曲を特定し、Chart を返す（FR-BAN-001）。
+
+        マッチに失敗した場合や受理しなかった場合は None。1 次認識器との
+        primary_candidates 突合は本サービスでは行わない（RESULT 画面では
+        既にキャッシュ照合済みのため、純粋に Top-1 を採用する）。
+        """
+        if self._banner_match is None:
+            return None
+        try:
+            result = self._banner_match.identify(
+                frame_bgr=frame_bgr, roi=RESULT_ROI["banner"]
+            )
+        except Exception:
+            logger.warning("banner match raised during RESULT identify", exc_info=True)
+            return None
+        if result is None or not result.accepted:
+            return None
+        song = self._master.get_song(result.song_id)
+        if song is None:
+            logger.warning(
+                "banner matched song_id %s but not found in master DB",
+                result.song_id,
+            )
+            return None
+        # 既存ロジックと同じく難易度ヒントを尊重して譜面を選ぶ
+        if difficulty_hint is not None:
+            for chart in song.charts:
+                if chart.difficulty == difficulty_hint:
+                    logger.info(
+                        "banner-identified: song=%s difficulty=%s distance=%d",
+                        song.title,
+                        difficulty_hint.value,
+                        result.distance,
+                    )
+                    return chart
+        priority = (
+            Difficulty.HYPER,
+            Difficulty.EX,
+            Difficulty.NORMAL,
+            Difficulty.EASY,
+            Difficulty.UPPER,
+        )
+        by_diff = {c.difficulty: c for c in song.charts}
+        for p in priority:
+            if p in by_diff:
+                logger.info(
+                    "banner-identified (fallback diff): song=%s difficulty=%s distance=%d",
+                    song.title,
+                    p.value,
+                    result.distance,
+                )
+                return by_diff[p]
+        return song.charts[0] if song.charts else None

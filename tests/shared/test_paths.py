@@ -28,9 +28,12 @@ def _make_paths(
         debug_dir=data / "debug",
         result_dir=data / "result",
         banner_dir=data / "banner",
+        banners_ref_dir=data / "banners_ref",
         templates_dir=bundle_dir / "templates",
         browser_source_dir=bundle_dir / "browser_source",
         master_seed_file=bundle_dir / "data" / "master.json",
+        banner_features_seed_file=bundle_dir / "data" / "banner_features.json",
+        banner_features_cache_file=data / "banner_features.json",
     )
 
 

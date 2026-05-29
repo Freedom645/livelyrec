@@ -95,6 +95,24 @@ class DeveloperSettings:
 
 
 @dataclass
+class BannerSettings:
+    """バナー画像認識（2 次認識器）の設定（FR-BAN-003〜009、v2.0）。
+
+    - `match_enabled`: バナー特徴量マッチを使う ON/OFF（既定 True）
+    - `auto_fetch_enabled`: Wiki からの自動収集 ON/OFF（既定 False、同意要）
+    - `endpoint_url`: `banner_features.json` の配信エンドポイント
+      （GitHub Releases 等）。空文字なら同梱 seed のみで動作
+    - `cache_dir`: 画像本体のローカルキャッシュ先。None なら AppPaths
+      の既定（`livelyrec_data/banners_ref/`）
+    """
+
+    match_enabled: bool = True
+    auto_fetch_enabled: bool = False
+    endpoint_url: str = ""
+    cache_dir: str | None = None
+
+
+@dataclass
 class AppSettings:
     schema_version: int = SCHEMA_VERSION
     obs: ObsSettings = field(default_factory=ObsSettings)
@@ -106,6 +124,7 @@ class AppSettings:
     logging: LoggingSettings = field(default_factory=LoggingSettings)
     result_capture: ResultCaptureSettings = field(default_factory=ResultCaptureSettings)
     developer: DeveloperSettings = field(default_factory=DeveloperSettings)
+    banner: BannerSettings = field(default_factory=BannerSettings)
 
 
 class ConfigStore:
@@ -170,6 +189,7 @@ def _from_dict(d: dict) -> AppSettings:
         logging=LoggingSettings(**merged["logging"]),
         result_capture=ResultCaptureSettings(**merged["result_capture"]),
         developer=DeveloperSettings(**merged["developer"]),
+        banner=BannerSettings(**merged["banner"]),
     )
 
 

@@ -64,6 +64,14 @@ class MasterParseError(LivelyRecError):
     """マスタ JSON のパース失敗。"""
 
 
+# --- バナー認識系（v2.0） ---
+
+
+class BannerFeaturesFetchError(LivelyRecError):
+    """バナー特徴量 JSON 取得失敗（FR-BAN-004）。本機能は必須ではないため
+    呼び出し側はこれを許容して seed JSON / 機能無効化にフォールバックする。"""
+
+
 # --- 設定系 ---
 
 class ConfigError(LivelyRecError):

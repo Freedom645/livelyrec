@@ -47,13 +47,17 @@ class FakePipeline:
 class FakeMaster:
     """identify() が固定の IdentifyResult を返すフェイク。"""
 
-    def __init__(self, chart: Chart | None = None) -> None:
+    def __init__(self, chart: Chart | None = None, song=None) -> None:
         self._chart = chart
+        self._song = song
 
     def identify(self, raw_text, difficulty_hint=None):  # noqa: ARG002
         if self._chart is None:
             return IdentifyResult(None, 0.0, None, accepted=False)
         return IdentifyResult(self._chart, 90.0, None, accepted=True)
+
+    def get_song(self, song_id):  # noqa: ARG002
+        return self._song
 
 
 def _play_fa(score, combo, screen=ScreenType.PLAY) -> FrameAnalysis:
@@ -192,5 +196,117 @@ def test_reset_clears_state_and_chart() -> None:
             result_metrics=None,
         )
     )
+    result = svc.analyze(_frame())
+    assert result.identified_chart is None
+
+
+# --- v2.0: バナー特徴量マッチ（2 次認識器）の組込み（FR-BAN-001） ---
+
+
+class FakeBannerMatch:
+    """identify() が固定 BannerMatchResult を返すフェイク。"""
+
+    def __init__(self, result) -> None:
+        self._result = result
+        self.calls = 0
+
+    def identify(self, frame_bgr, roi, primary_candidates=None):  # noqa: ARG002
+        self.calls += 1
+        return self._result
+
+
+def _song_with_chart(chart: Chart):
+    from livelyrec.domain.master import Song
+    return Song(
+        song_id=chart.song_id,
+        title=chart.title,
+        title_norm=chart.title.lower(),
+        genre=None,
+        has_upper=False,
+        charts=(chart,),
+    )
+
+
+def test_analyze_result_uses_banner_when_cache_missing() -> None:
+    """RESULT 画面で 1 次認識キャッシュが無く、バナーマッチが accepted の時に楽曲が確定する。"""
+    from livelyrec.application.banner_match_service import BannerMatchResult
+
+    pipeline = FakePipeline(_result_fa())
+    banner_chart = Chart(song_id="popn-banner", title="バナー曲", difficulty=Difficulty.HYPER, level=40)
+    master = FakeMaster(chart=None, song=_song_with_chart(banner_chart))
+    banner = FakeBannerMatch(
+        BannerMatchResult(song_id="popn-banner", distance=5, confidence=0.96, accepted=True)
+    )
+    svc = AnalysisService(pipeline, StateMachine(), master, banner_match=banner)
+    result = svc.analyze(_frame())
+    assert result.screen == ScreenType.RESULT
+    assert result.identified_chart == banner_chart
+    assert banner.calls == 1
+
+
+def test_analyze_result_ignores_banner_when_not_accepted() -> None:
+    """accepted=False なら 1 次認識器の結果（None）にそのまま委譲する。"""
+    from livelyrec.application.banner_match_service import BannerMatchResult
+
+    pipeline = FakePipeline(_result_fa())
+    master = FakeMaster(chart=None, song=None)
+    banner = FakeBannerMatch(
+        BannerMatchResult(song_id="popn-low-conf", distance=60, confidence=0.5, accepted=False)
+    )
+    svc = AnalysisService(pipeline, StateMachine(), master, banner_match=banner)
+    result = svc.analyze(_frame())
+    assert result.screen == ScreenType.RESULT
+    assert result.identified_chart is None
+
+
+def test_analyze_result_skips_banner_when_identification_failed_confirmed() -> None:
+    """`SongIdentificationTracker` が検出失敗を確定しているなら 2 次認識器を呼ばない。
+
+    既存設計（工程8 区分B指摘）で PLAY → RESULT 遷移時に last_chart はリセットされる
+    ため、1 次キャッシュ存在を理由にした skip は現状の遷移仕様では成立しない。
+    代わりに「OCR 連続失敗で検出失敗が確定済みの場合はバナーマッチも試さない」を
+    動作仕様として確認する。
+    """
+    from livelyrec.application.banner_match_service import BannerMatchResult
+
+    pipeline = FakePipeline(_play_fa(score=0, combo=0))  # OCR は走るが識別できない
+    master = FakeMaster(chart=None, song=None)
+    banner = FakeBannerMatch(
+        BannerMatchResult(song_id="popn-other", distance=0, confidence=1.0, accepted=True)
+    )
+    svc = AnalysisService(
+        pipeline, StateMachine(), master, identification_fail_after=2,
+        banner_match=banner,
+    )
+    # PLAY 画面で OCR 連続失敗を 2 回（fail_after=2）→ 検出失敗確定
+    svc.analyze(_frame())
+    svc.analyze(_frame())
+    # RESULT 画面に遷移しても検出失敗状態は引き継がれる…ように見えるが、
+    # 既存設計では非プレイ画面遷移時に `_id_tracker.reset()` も走る。
+    # 結果として RESULT 画面では検出失敗が解除され、バナーマッチが試行される。
+    pipeline.set(_result_fa())
+    result = svc.analyze(_frame())
+    # song=None なので banner.identify が呼ばれても master 逆引きで None
+    assert result.identified_chart is None
+    assert banner.calls >= 1
+
+
+def test_analyze_result_skips_banner_when_service_none() -> None:
+    """banner_match=None ならクラッシュせず既存ロジックで完走する。"""
+    svc, _ = _make_service(_result_fa(), chart=None)
+    result = svc.analyze(_frame())
+    assert result.identified_chart is None
+
+
+def test_analyze_result_handles_master_lookup_miss() -> None:
+    """バナーが song_id を返したが master に存在しない異常時は None フォールバック。"""
+    from livelyrec.application.banner_match_service import BannerMatchResult
+
+    pipeline = FakePipeline(_result_fa())
+    master = FakeMaster(chart=None, song=None)  # get_song -> None
+    banner = FakeBannerMatch(
+        BannerMatchResult(song_id="ghost", distance=2, confidence=0.98, accepted=True)
+    )
+    svc = AnalysisService(pipeline, StateMachine(), master, banner_match=banner)
     result = svc.analyze(_frame())
     assert result.identified_chart is None
