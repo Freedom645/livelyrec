@@ -204,6 +204,42 @@ _BANNER_IMAGE_RE = re.compile(
 )
 
 
+def is_song_page(wikitext: str) -> bool:
+    """remywiki の楽曲ページかどうかを判別する。
+
+    楽曲ページには必ず `== Song Information ==`（または `==Song Information==`）
+    セクションが存在する。アーティスト・作曲者・楽曲集ページ等の非楽曲ページは
+    本セクションが無いため、これで判別する。
+    """
+    return bool(re.search(r"==\s*Song\s+Information\s*==", wikitext, re.IGNORECASE))
+
+
+# 楽曲ページの Artist / Composer 行から候補名を抽出する
+# 例: "Artist: Orange Lounge<br>" や "Composition/Arrangement: [[Tomosuke Funaki|TOMOSUKE]]<br>"
+_ARTIST_LINE_RE = re.compile(
+    r"(?:Artist|Composition(?:/Arrangement)?|Vocals?):\s*"
+    r"((?:\[\[[^\]]+\]\]|[^<\n])+)\s*<br>",
+    re.IGNORECASE,
+)
+
+
+def extract_artist_candidates(wikitext: str) -> list[str]:
+    """Artist / Composer / Vocals 行から master 突合用の候補名を抽出する。
+
+    remywiki ページのローマ字読み名だけでは突合困難な楽曲（例: 西新宿清掃曲）
+    でも、Artist 名が master.json と一致すれば紐付けできる可能性がある。
+    """
+    out: list[str] = []
+    for m in _ARTIST_LINE_RE.finditer(wikitext):
+        value = m.group(1).strip()
+        # ウィキリンク [[Foo|Bar]] → Bar / [[Foo]] → Foo の正規化
+        value = re.sub(r"\[\[(?:[^|\]]+\|)?([^\]]+)\]\]", r"\1", value)
+        value = value.strip().rstrip(",.;")
+        if value:
+            out.append(value)
+    return out
+
+
 def find_banner_file_in_wikitext(wikitext: str) -> str | None:
     """wikitext からバナー画像ファイル名を抽出する。
 
@@ -280,21 +316,44 @@ def compute_hashes(image_path: Path) -> tuple[int, int] | None:
 def match_to_master(
     candidates: list[str],
     master_songs: list[dict],
-    score_cutoff: int = 95,
+    score_cutoff: int = 85,
+    artist_candidates: list[str] | None = None,
 ) -> tuple[dict, int] | None:
+    """master.json のタイトルおよび（任意で）アーティストに対し fuzzy 突合する。
+
+    タイトル系候補と artist 系候補で `master_songs` をスキャンし、最高スコアを
+    返す。タイトル直一致を優先し、artist 突合は補助的に扱う（score-2 のペナルティ）。
+    """
     from rapidfuzz import fuzz, process
 
     titles = [s["title"] for s in master_songs]
-    best_song = None
+    best_song: dict | None = None
     best_score = 0
     for cand in candidates:
         result = process.extractOne(
             cand, titles, scorer=fuzz.WRatio, score_cutoff=score_cutoff
         )
         if result and result[1] > best_score:
-            matched_title, score, idx = result
+            _matched, score, idx = result
             best_song = master_songs[idx]
             best_score = int(score)
+    # artist 突合（あれば）。タイトルでヒット済みでもより高ければ更新するが、
+    # 同一スコアでの上書きは避けるためペナルティ -2 を引いて優先順位を下げる。
+    if artist_candidates:
+        artists = [s.get("artist", "") or "" for s in master_songs]
+        for cand in artist_candidates:
+            if not cand:
+                continue
+            result = process.extractOne(
+                cand, artists, scorer=fuzz.WRatio,
+                score_cutoff=max(score_cutoff, 90),
+            )
+            if result:
+                _matched, score, idx = result
+                adjusted = int(score) - 2
+                if adjusted > best_score:
+                    best_song = master_songs[idx]
+                    best_score = adjusted
     if best_song is None:
         return None
     return best_song, best_score
@@ -308,7 +367,10 @@ def main(argv: list[str]) -> int:
     p.add_argument("--unmatched-csv", type=Path, default=Path("data/banner_features.unmatched.csv"))
     p.add_argument("--rate-sec", type=float, default=1.0)
     p.add_argument("--limit", type=int, default=0, help="0=全件、>0 で件数制限")
-    p.add_argument("--score-cutoff", type=int, default=95)
+    p.add_argument(
+        "--score-cutoff", type=int, default=85,
+        help="rapidfuzz WRatio の閾値（v2 既定 85、ローマ字読み楽曲を救うため緩和）",
+    )
     p.add_argument("-v", "--verbose", action="store_true")
     args = p.parse_args(argv)
 
@@ -330,6 +392,7 @@ def main(argv: list[str]) -> int:
 
     features: list[dict] = []
     unmatched: list[tuple[str, str, int]] = []
+    skipped_non_song = 0
     seen_song_ids: set[str] = set()
 
     for i, page_title in enumerate(candidates, start=1):
@@ -338,14 +401,30 @@ def main(argv: list[str]) -> int:
         wikitext = fetch_page_wikitext(REMYWIKI_API, page_title)
         time.sleep(args.rate_sec)
         if not wikitext:
+            # 楽曲ページかどうか判別できないため未マッチ扱い（多くはアーティスト系）
             unmatched.append((page_title, "wikitext-missing", 0))
+            continue
+
+        # 改善 A（v2）: 楽曲ページ判別。`== Song Information ==` セクション
+        # が無いページ（アーティスト・作曲者・楽曲集ページ等）は未マッチではなく
+        # 「楽曲ページではない」として静かにスキップする。
+        if not is_song_page(wikitext):
+            skipped_non_song += 1
+            logger.debug("  skipped (non-song page): %s", page_title)
             continue
 
         title_candidates = extract_original_titles(wikitext)
         title_candidates.insert(0, page_title)
-        match = match_to_master(title_candidates, master_songs, args.score_cutoff)
+        artist_candidates = extract_artist_candidates(wikitext)
+        match = match_to_master(
+            title_candidates, master_songs, args.score_cutoff,
+            artist_candidates=artist_candidates,
+        )
         if match is None:
-            unmatched.append((page_title, ";".join(title_candidates[:3]), 0))
+            reason = "titles=" + ";".join(title_candidates[:3])
+            if artist_candidates:
+                reason += " / artists=" + ";".join(artist_candidates[:3])
+            unmatched.append((page_title, reason, 0))
             continue
         song, match_score = match
 
@@ -404,7 +483,10 @@ def main(argv: list[str]) -> int:
     args.out.write_text(
         json.dumps(out_doc, ensure_ascii=False, indent=2), encoding="utf-8"
     )
-    logger.info("wrote %d features to %s", len(features), args.out)
+    logger.info(
+        "wrote %d features to %s (skipped %d non-song pages)",
+        len(features), args.out, skipped_non_song,
+    )
 
     if unmatched:
         args.unmatched_csv.parent.mkdir(parents=True, exist_ok=True)
