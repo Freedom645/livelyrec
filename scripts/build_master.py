@@ -31,7 +31,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from livelyrec.domain.master import normalize_song_title  # noqa: E402
 
 OFFICIAL_URL = "https://p.eagate.573.jp/game/eacpopn/lively/info/music.html"
-USER_AGENT = "LivelyRec/0.1 (+https://github.com/OWNER/livelyrec)"
+USER_AGENT = "LivelyRec/0.1 (+https://github.com/Freedom645/livelyrec)"
 
 DEFAULT_DIFFICULTIES = ("EASY", "NORMAL", "HYPER", "EX")
 

@@ -42,6 +42,8 @@ datas += [("browser_source", "browser_source")]
 datas += [("templates", "templates")]
 # 楽曲マスタの seed（オフライン初回起動・エンドポイント未設定時のフォールバック）
 datas += [("data/master.json", "data")]
+# バナー特徴量マスタの seed（v2.0、FR-BAN-003）
+datas += [("data/banner_features.json", "data")]
 # PaddleOCR は tools/, ppocr/, ppstructure/ 配下の .py を動的 import するため
 # include_py_files=True で同梱する必要がある（pyimod02_importers では辿れない）
 datas += collect_data_files("paddleocr", include_py_files=True)

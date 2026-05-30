@@ -33,7 +33,7 @@ from urllib.request import Request, urlopen
 
 logger = logging.getLogger("banner_collect")
 
-DEFAULT_USER_AGENT = "LivelyRec-PoC/0.1 (banner-recognition research; +https://example.invalid)"
+DEFAULT_USER_AGENT = "LivelyRec-PoC/0.1 (banner-recognition research; +https://github.com/Freedom645/livelyrec)"
 
 
 @dataclass(frozen=True)

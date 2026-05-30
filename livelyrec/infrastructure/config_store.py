@@ -61,7 +61,8 @@ class BrowserSourceSettings:
 
 @dataclass
 class MasterSettings:
-    endpoint_url: str = ""
+    # 楽曲マスタ配信先 URL（GitHub Pages 既定）。空にすると同梱 seed のみで動作。
+    endpoint_url: str = "https://Freedom645.github.io/livelyrec/master.json"
 
 
 @dataclass
@@ -107,7 +108,8 @@ class BannerSettings:
     """
 
     match_enabled: bool = True
-    endpoint_url: str = ""
+    # バナー特徴量マスタ配信先 URL（GitHub Pages 既定）。空にすると同梱 seed のみで動作。
+    endpoint_url: str = "https://Freedom645.github.io/livelyrec/banner_features.json"
 
 
 @dataclass

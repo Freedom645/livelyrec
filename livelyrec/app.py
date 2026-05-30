@@ -424,7 +424,7 @@ def main() -> int:
     )
 
     export = ExportService(result_repo)
-    github = GitHubClient(owner="OWNER", repo="livelyrec")  # TODO: 実リポジトリ名を反映
+    github = GitHubClient(owner="Freedom645", repo="livelyrec")
     from livelyrec import __version__
     update = UpdateService(github, current_version=__version__)
 

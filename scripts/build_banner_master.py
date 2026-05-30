@@ -57,7 +57,7 @@ from livelyrec.infrastructure.banner_features import (  # noqa: E402
 logger = logging.getLogger("build_banner_master")
 
 USER_AGENT = (
-    "LivelyRec/0.2 (banner-master builder; non-commercial; +https://example.invalid)"
+    "LivelyRec/0.2 (banner-master builder; non-commercial; +https://github.com/Freedom645/livelyrec)"
 )
 
 REMYWIKI_API = "https://remywiki.com/api.php"
