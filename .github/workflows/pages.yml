@@ -1,0 +1,94 @@
+name: Pages
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'data/master.json'
+      - 'data/banner_features.json'
+      - '.github/workflows/pages.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# 同時実行は最新のみ採用（リリース系の衝突回避）
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+jobs:
+  deploy:
+    name: Deploy GitHub Pages
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Prepare site contents
+        shell: bash
+        run: |
+          mkdir -p _site
+          cp data/master.json _site/master.json
+          cp data/banner_features.json _site/banner_features.json
+          cat > _site/index.html <<'HTML'
+          <!DOCTYPE html>
+          <html lang="ja">
+          <head>
+            <meta charset="utf-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1">
+            <title>LivelyRec</title>
+            <style>
+              body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+                     max-width: 720px; margin: 2em auto; padding: 0 1em; color: #222; }
+              h1 { border-bottom: 2px solid #ddd; padding-bottom: 0.2em; }
+              .lead { color: #555; }
+              .release { background: #f4f6f8; padding: 1em 1.2em; border-radius: 8px; margin: 1em 0; }
+              .release a { font-weight: bold; }
+              code { background: #f0f0f0; padding: 0.1em 0.4em; border-radius: 3px; }
+              ul { line-height: 1.8; }
+              footer { margin-top: 3em; color: #888; font-size: 0.85em; border-top: 1px solid #eee; padding-top: 1em; }
+            </style>
+          </head>
+          <body>
+            <h1>LivelyRec</h1>
+            <p class="lead">pop'n music lively のスコア記録・配信支援ツール（個人開発・非営利）。</p>
+
+            <div class="release">
+              <strong>最新リリース</strong> →
+              <a href="https://github.com/Freedom645/livelyrec/releases/latest">GitHub Releases</a>
+            </div>
+
+            <h2>配信データ</h2>
+            <ul>
+              <li><a href="master.json"><code>master.json</code></a> — 楽曲マスタ</li>
+              <li><a href="banner_features.json"><code>banner_features.json</code></a> — バナー特徴量マスタ</li>
+            </ul>
+
+            <footer>
+              pop&apos;n music は KONAMI Amusement の登録商標です。本ソフトウェアは KONAMI Amusement とは関係ありません（非公式ツール）。
+            </footer>
+          </body>
+          </html>
+          HTML
+
+      - name: Configure Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
