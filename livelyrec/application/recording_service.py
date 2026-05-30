@@ -151,6 +151,10 @@ class RecordingService:
         self._current_chart: Chart | None = None
         # 検出失敗が確定したセッションかどうか（now_playing.changed の display 用）
         self._current_detection_failed: bool = False
+        # SELECT 画面で確定したカーソル位置の譜面（v2.0、FR-BAN-002 / FR-STR-007 ③）。
+        # プレイセッションが無い時に now_playing.changed の payload に採用される。
+        # PLAY 画面に入ったら無効化される。
+        self._current_select_chart: Chart | None = None
         # 進行中楽曲のプレイ画面判定数累計（日次カウンタのライブ表示用 / FR-REC-034）
         self._live_judgements: Judgements = Judgements()
         # リザルト記録の安定化状態（I-017）
@@ -388,6 +392,10 @@ class RecordingService:
             self._handle_play(analysis)
         elif analysis.screen == ScreenType.RESULT:
             self._handle_result(analysis, frame)
+        else:
+            # SELECT/READY/OPTION/ロード等の楽曲外画面で SELECT chart を追跡（v2.0）。
+            # PLAY 画面に入っている間は SELECT 楽曲を表示せず、プレイ中楽曲が優先。
+            self._handle_select(analysis)
 
         if (
             analysis.screen not in (ScreenType.PLAY, ScreenType.RESULT)
@@ -400,6 +408,29 @@ class RecordingService:
         if analysis.screen != ScreenType.RESULT:
             # リザルト画面を離れたら安定化状態をリセットし、次のリザルトに備える
             self._result_stabilizer.reset()
+
+        if analysis.screen == ScreenType.PLAY and self._current_select_chart is not None:
+            # プレイ画面に入ったら SELECT chart を忘れる（プレイ中楽曲を優先表示）
+            self._current_select_chart = None
+
+    def _handle_select(self, analysis: AnalysisResult) -> None:
+        """SELECT 画面で確定した chart を `_current_select_chart` に反映し、
+        変化があったら `now_playing.changed` を発火する（v2.0、FR-STR-007 ③）。
+
+        プレイセッション中（`_current_session is not None`）は SELECT 楽曲を
+        通知しない（プレイ中楽曲が優先表示）。
+        """
+        if self._current_session is not None:
+            return
+        new_chart = analysis.select_chart
+        prev = self._current_select_chart
+        # chart_id ベースで差分判定（同一インスタンスでなくても等価判定）
+        prev_id = prev.chart_id if prev is not None else None
+        new_id = new_chart.chart_id if new_chart is not None else None
+        if prev_id == new_id:
+            return
+        self._current_select_chart = new_chart
+        self._emit_now_playing()
 
     def _emit_judgements_tick(self) -> None:
         """日次累計＋進行中楽曲のライブ判定数を judgements.tick として通知する。"""
@@ -487,11 +518,36 @@ class RecordingService:
             self._emit_judgements_tick()
 
     def _emit_now_playing(self) -> None:
-        """`now_playing.changed` を配信する（FR-STR-007 ②, FR-STR-008）。"""
-        if self._current_session is None:
+        """`now_playing.changed` を配信する（FR-STR-007 ②, FR-STR-008 / FR-STR-007 ③）。
+
+        - プレイセッション中: 現プレイ楽曲を送る（既存挙動）
+        - プレイセッション外で SELECT 画面 chart が確定中: 選曲中楽曲を送る
+          （v2.0、R-027 プレースホルダ廃止）
+        - どちらも無い場合は発火しない
+        """
+        chart: Chart | None
+        identified: bool
+        business_date: str
+        session_id: str | None
+        source: str  # "play" or "select"
+
+        if self._current_session is not None:
+            chart = self._current_chart
+            identified = chart is not None
+            business_date = self._current_session.business_date.isoformat()
+            session_id = self._current_session.session_id
+            source = "play"
+        elif self._current_select_chart is not None:
+            chart = self._current_select_chart
+            identified = True
+            business_date = business_date_of(
+                datetime.now(), self._rollover_hour
+            ).isoformat()
+            session_id = None
+            source = "select"
+        else:
             return
-        identified = self._current_chart is not None
-        chart = self._current_chart
+
         chart_payload: dict | None = None
         if chart is not None:
             chart_payload = {
@@ -506,13 +562,13 @@ class RecordingService:
         display_title = (
             chart.title if chart is not None else DETECTION_FAILED_LABEL
         )
-        business_date = self._current_session.business_date.isoformat()
         self._emit("now_playing.changed", {
-            "session_id": self._current_session.session_id,
+            "session_id": session_id,
             "identified": identified,
             "chart": chart_payload,
             "display_title": display_title,
             "business_date": business_date,
+            "source": source,
         })
 
     def _handle_result(

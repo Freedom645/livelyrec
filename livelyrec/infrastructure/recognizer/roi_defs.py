@@ -51,11 +51,20 @@ RESULT_ROI: dict[str, Box] = {
 
 
 # 選曲画面 ROI
+# - `banner`: 楽曲バナー領域。バナー特徴量マッチによる楽曲特定（FR-BAN-002、v2.0）
+# - `upper_mark`: UPPER 譜面選択中に右側に表示される金色「UPPER」ロゴ領域。
+#   テンプレートマッチング `templates/select/upper_mark.png` で判定（v2.0）
+# - `difficulty_color`: 難易度を示す色マーク領域（3×3 px、HSV 平均色相で
+#   EASY/NORMAL/HYPER/EX を 4 値分類、v2.0）
+# - 既存 `logo` は `banner` のエイリアス（同座標）。後方互換のため残す
 SELECT_ROI: dict[str, Box] = {
-    "logo":       (117, 274, 505, 366),
-    "difficulty": (566, 258, 633, 276),
-    "level":      (577, 302, 630, 339),
-    "artist":     (179, 378, 591, 411),
+    "banner":           (117, 274, 505, 366),
+    "logo":             (117, 274, 505, 366),  # alias of banner
+    "upper_mark":       (371, 307, 501, 335),
+    "difficulty_color": (600, 269, 603, 272),
+    "difficulty":       (566, 258, 633, 276),
+    "level":            (577, 302, 630, 339),
+    "artist":           (179, 378, 591, 411),
 }
 
 

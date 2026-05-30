@@ -314,8 +314,32 @@ def main() -> int:
         fetch_error=BannerFeaturesFetchError,
     )
 
+    # SELECT 画面の UPPER 譜面検出用テンプレ（FR-BAN-002、v2.0）。
+    # 同梱配布物（templates/select/upper_mark.png）を読み込み。
+    # 未配備時は None を渡し、UPPER 判定は常に False で動作する。
+    upper_template = None
+    upper_template_path = paths.templates_dir / "select" / "upper_mark.png"
+    if upper_template_path.exists():
+        try:
+            from livelyrec.infrastructure.recognizer.select_screen import (
+                load_upper_template,
+            )
+            upper_template = load_upper_template(upper_template_path)
+            logger.info("upper template loaded: %s", upper_template_path)
+        except Exception:
+            logger.exception("upper template load failed; UPPER detection disabled")
+    else:
+        logger.info(
+            "upper template not found at %s; UPPER detection disabled",
+            upper_template_path,
+        )
+
     state = StateMachine()
-    analysis = AnalysisService(pipeline, state, master, banner_match=banner_match)
+    analysis = AnalysisService(
+        pipeline, state, master,
+        banner_match=banner_match,
+        upper_template=upper_template,
+    )
 
     obs = OBSClient(ObsConfig(
         host=settings.obs.host,

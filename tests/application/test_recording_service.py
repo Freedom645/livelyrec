@@ -423,6 +423,105 @@ def test_now_playing_changed_for_identified_session() -> None:
     assert p["identified"] is True
     assert p["chart"]["title"] == "テスト楽曲"
     assert p["display_title"] == "テスト楽曲"
+    assert p["source"] == "play"
+
+
+# --- v2.0: SELECT 画面で確定した楽曲を now_playing.changed で配信（FR-STR-007 ③） ---
+
+
+def _select_chart(song_id: str = "popn-sel", title: str = "選曲楽曲") -> Chart:
+    return Chart(
+        song_id=song_id, title=title,
+        difficulty=Difficulty.EX, is_upper=True, level=48,
+    )
+
+
+def test_select_chart_emits_now_playing_when_no_session() -> None:
+    """プレイセッション無し時、SELECT 画面で確定した chart が now_playing.changed として配信される。"""
+    svc, _, _, _ = _service()
+    events: list[dict] = []
+    svc.add_listener(events.append)
+    chart = _select_chart()
+    svc._handle_analysis(
+        AnalysisResult(
+            screen=ScreenType.SELECT, confidence=0.85, select_chart=chart,
+        )
+    )
+    nps = [e for e in events if e["type"] == "now_playing.changed"]
+    assert nps
+    p = nps[-1]["payload"]
+    assert p["identified"] is True
+    assert p["chart"]["chart_id"] == chart.chart_id
+    assert p["chart"]["is_upper"] is True
+    assert p["chart"]["difficulty"] == "EX"
+    assert p["display_title"] == "選曲楽曲"
+    assert p["source"] == "select"
+    assert p["session_id"] is None
+
+
+def test_select_chart_change_emits_only_on_diff() -> None:
+    """同じ chart_id で複数回 SELECT 画面に来ても、now_playing.changed は 1 回だけ発火。"""
+    svc, _, _, _ = _service()
+    events: list[dict] = []
+    svc.add_listener(events.append)
+    chart = _select_chart()
+    for _ in range(3):
+        svc._handle_analysis(
+            AnalysisResult(
+                screen=ScreenType.SELECT, confidence=0.9, select_chart=chart,
+            )
+        )
+    nps = [e for e in events if e["type"] == "now_playing.changed"]
+    assert len(nps) == 1
+
+
+def test_select_chart_different_emits_again() -> None:
+    """カーソル移動で chart_id が変われば再度 now_playing.changed が出る。"""
+    svc, _, _, _ = _service()
+    events: list[dict] = []
+    svc.add_listener(events.append)
+    chart_a = _select_chart(song_id="popn-a", title="曲A")
+    chart_b = _select_chart(song_id="popn-b", title="曲B")
+    svc._handle_analysis(AnalysisResult(screen=ScreenType.SELECT, confidence=0.9, select_chart=chart_a))
+    svc._handle_analysis(AnalysisResult(screen=ScreenType.SELECT, confidence=0.9, select_chart=chart_b))
+    nps = [e for e in events if e["type"] == "now_playing.changed"]
+    assert len(nps) == 2
+    assert nps[0]["payload"]["display_title"] == "曲A"
+    assert nps[1]["payload"]["display_title"] == "曲B"
+
+
+def test_select_chart_ignored_during_play_session() -> None:
+    """プレイセッション中の SELECT 画面は select_chart を反映しない（プレイ中楽曲が優先）。"""
+    svc, _, _, _ = _service()
+    # PLAY セッションを開始
+    svc._handle_analysis(
+        AnalysisResult(screen=ScreenType.PLAY, confidence=0.9, identified_chart=_CHART)
+    )
+    events: list[dict] = []
+    svc.add_listener(events.append)
+    # SELECT 画面の chart を与えても now_playing.changed は出ない
+    svc._handle_analysis(
+        AnalysisResult(
+            screen=ScreenType.SELECT, confidence=0.9, select_chart=_select_chart(),
+        )
+    )
+    nps = [e for e in events if e["type"] == "now_playing.changed"]
+    assert not nps
+
+
+def test_select_chart_cleared_on_play_entry() -> None:
+    """SELECT 中の chart が PLAY 画面進入時にクリアされる（次回 SELECT で再度発火する）。"""
+    svc, _, _, _ = _service()
+    chart = _select_chart()
+    svc._handle_analysis(
+        AnalysisResult(screen=ScreenType.SELECT, confidence=0.9, select_chart=chart)
+    )
+    # PLAY 画面に入る
+    svc._handle_analysis(
+        AnalysisResult(screen=ScreenType.PLAY, confidence=0.9, identified_chart=_CHART)
+    )
+    # この時点で _current_select_chart はクリアされている想定
+    assert svc._current_select_chart is None
 
 
 def test_handle_result_for_failed_detection_session() -> None:

@@ -7,6 +7,8 @@
 
 from __future__ import annotations
 
+from pathlib import Path
+
 import numpy as np
 
 from livelyrec.application.analysis_service import AnalysisService
@@ -310,3 +312,166 @@ def test_analyze_result_handles_master_lookup_miss() -> None:
     svc = AnalysisService(pipeline, StateMachine(), master, banner_match=banner)
     result = svc.analyze(_frame())
     assert result.identified_chart is None
+
+
+# --- v2.0: SELECT 画面組込み（FR-BAN-002、Phase B） ---
+
+
+def _select_fa() -> FrameAnalysis:
+    return FrameAnalysis(
+        frame=_norm(),
+        detection=ScreenDetection(ScreenType.SELECT, 0.85, {}),
+        play_metrics=None,
+        result_metrics=None,
+    )
+
+
+def _real_frame(shape=(768, 1366)) -> np.ndarray:
+    """SELECT 画面相当の 1366×768 BGR フレーム（ベタ塗り）。"""
+    return np.full((shape[0], shape[1], 3), 16, dtype=np.uint8)
+
+
+def _real_frame_with_difficulty(difficulty: Difficulty) -> np.ndarray:
+    """difficulty_color ROI に指定難易度の色を埋め込んだフレーム。"""
+    import cv2 as _cv2
+
+    from livelyrec.infrastructure.recognizer.roi_defs import SELECT_ROI
+
+    hue_map = {
+        Difficulty.HYPER: 26,
+        Difficulty.NORMAL: 44,
+        Difficulty.EASY: 113,
+        Difficulty.EX: 175,
+    }
+    frame = _real_frame()
+    x1, y1, x2, y2 = SELECT_ROI["difficulty_color"]
+    hsv = np.full((y2 - y1, x2 - x1, 3), (hue_map[difficulty], 200, 200), dtype=np.uint8)
+    frame[y1:y2, x1:x2] = _cv2.cvtColor(hsv, _cv2.COLOR_HSV2BGR)
+    return frame
+
+
+def _chart_with(song_id: str, diff: Difficulty, is_upper: bool = False) -> Chart:
+    return Chart(
+        song_id=song_id, title=f"song-{song_id}", difficulty=diff,
+        is_upper=is_upper, level=40 if not is_upper else 45,
+    )
+
+
+def _song_with_charts(song_id: str, charts: tuple) -> object:
+    from livelyrec.domain.master import Song
+    return Song(
+        song_id=song_id, title=f"song-{song_id}",
+        title_norm=f"song-{song_id}".lower(),
+        genre=None, has_upper=any(c.is_upper for c in charts),
+        charts=charts,
+    )
+
+
+def test_analyze_select_identifies_chart_with_difficulty_and_upper() -> None:
+    """SELECT 画面でバナー特定 + 難易度色 EX + UPPER マーク有 → UPPER:EX が確定。
+
+    SongStabilizer 多数決を満たすため同一フレームを 5 回投じる。
+    """
+    from livelyrec.application.banner_match_service import BannerMatchResult
+    from livelyrec.infrastructure.recognizer.select_screen import load_upper_template
+
+    song_id = "popn-test"
+    charts = (
+        _chart_with(song_id, Difficulty.EX, is_upper=False),
+        _chart_with(song_id, Difficulty.EX, is_upper=True),
+    )
+    song = _song_with_charts(song_id, charts)
+    master = FakeMaster(chart=None, song=song)
+    banner = FakeBannerMatch(
+        BannerMatchResult(song_id=song_id, distance=8, confidence=0.94, accepted=True)
+    )
+    pipeline = FakePipeline(_select_fa())
+
+    # 実際の UPPER テンプレを使い、ROI に同じテンプレを貼り込んで is_upper=True を再現
+    repo_root = Path(__file__).resolve().parents[2]
+    template = load_upper_template(repo_root / "templates" / "select" / "upper_mark.png")
+    frame = _real_frame_with_difficulty(Difficulty.EX)
+    import cv2 as _cv2
+
+    from livelyrec.infrastructure.recognizer.roi_defs import SELECT_ROI
+
+    x1, y1, x2, y2 = SELECT_ROI["upper_mark"]
+    frame[y1:y2, x1:x2] = _cv2.cvtColor(template, _cv2.COLOR_GRAY2BGR)
+
+    svc = AnalysisService(
+        pipeline, StateMachine(), master,
+        banner_match=banner, upper_template=template,
+    )
+    final = None
+    for _ in range(5):
+        final = svc.analyze(frame)
+    assert final is not None
+    assert final.screen == ScreenType.SELECT
+    assert final.select_chart is not None
+    assert final.select_chart.song_id == song_id
+    assert final.select_chart.difficulty == Difficulty.EX
+    assert final.select_chart.is_upper is True
+
+
+def test_analyze_select_returns_none_when_difficulty_unreadable() -> None:
+    """難易度色 ROI が無彩色（黒）→ None で chart 確定しない。"""
+    from livelyrec.application.banner_match_service import BannerMatchResult
+
+    song_id = "popn-x"
+    song = _song_with_charts(song_id, (_chart_with(song_id, Difficulty.HYPER),))
+    master = FakeMaster(chart=None, song=song)
+    banner = FakeBannerMatch(
+        BannerMatchResult(song_id=song_id, distance=5, confidence=0.96, accepted=True)
+    )
+    pipeline = FakePipeline(_select_fa())
+    svc = AnalysisService(pipeline, StateMachine(), master, banner_match=banner)
+    result = svc.analyze(_real_frame())  # difficulty_color は全黒
+    assert result.screen == ScreenType.SELECT
+    assert result.select_chart is None
+
+
+def test_analyze_select_falls_back_when_upper_missing_in_master() -> None:
+    """is_upper=True 検出したが master に UPPER 譜面が無い場合は通常譜面に縮退。"""
+    from livelyrec.application.banner_match_service import BannerMatchResult
+    from livelyrec.infrastructure.recognizer.select_screen import load_upper_template
+
+    song_id = "popn-noupp"
+    song = _song_with_charts(
+        song_id,
+        (_chart_with(song_id, Difficulty.HYPER, is_upper=False),),
+    )
+    master = FakeMaster(chart=None, song=song)
+    banner = FakeBannerMatch(
+        BannerMatchResult(song_id=song_id, distance=5, confidence=0.96, accepted=True)
+    )
+    pipeline = FakePipeline(_select_fa())
+    repo_root = Path(__file__).resolve().parents[2]
+    template = load_upper_template(repo_root / "templates" / "select" / "upper_mark.png")
+    frame = _real_frame_with_difficulty(Difficulty.HYPER)
+    import cv2 as _cv2
+
+    from livelyrec.infrastructure.recognizer.roi_defs import SELECT_ROI
+    x1, y1, x2, y2 = SELECT_ROI["upper_mark"]
+    frame[y1:y2, x1:x2] = _cv2.cvtColor(template, _cv2.COLOR_GRAY2BGR)
+
+    svc = AnalysisService(
+        pipeline, StateMachine(), master,
+        banner_match=banner, upper_template=template,
+    )
+    final = None
+    for _ in range(5):
+        final = svc.analyze(frame)
+    assert final.select_chart is not None
+    # UPPER 譜面が無いので通常譜面で確定
+    assert final.select_chart.is_upper is False
+    assert final.select_chart.difficulty == Difficulty.HYPER
+
+
+def test_analyze_select_returns_none_without_banner_service() -> None:
+    """banner_match=None なら SELECT 画面でも select_chart は None。"""
+    pipeline = FakePipeline(_select_fa())
+    master = FakeMaster(chart=None, song=None)
+    svc = AnalysisService(pipeline, StateMachine(), master, banner_match=None)
+    result = svc.analyze(_real_frame_with_difficulty(Difficulty.HYPER))
+    assert result.screen == ScreenType.SELECT
+    assert result.select_chart is None

@@ -17,7 +17,11 @@ from livelyrec.infrastructure.recognizer.retry_detector import (
     PlayFrameSnapshot,
     RetryDetector,
 )
-from livelyrec.infrastructure.recognizer.roi_defs import RESULT_ROI
+from livelyrec.infrastructure.recognizer.roi_defs import RESULT_ROI, SELECT_ROI
+from livelyrec.infrastructure.recognizer.select_screen import (
+    detect_difficulty_color,
+    detect_upper_mark,
+)
 
 from .banner_match_service import BannerMatchService
 from .master_service import MasterService, SongStabilizer
@@ -45,6 +49,10 @@ class AnalysisResult:
     result_combo: int | None = None
     result_judgements: Judgements | None = None
     result_clear_type: str | None = None
+    # SELECT 画面で確定したカーソル位置楽曲（v2.0、FR-BAN-002 / FR-STR-007 ③）。
+    # バナー特徴量マッチ + UPPER マーク + 難易度色から chart_id を確定する。
+    # None は「SELECT 画面でない」または「特定不能」を意味する。
+    select_chart: Chart | None = None
 
 
 class SongIdentificationTracker:
@@ -91,6 +99,7 @@ class AnalysisService:
         master: MasterService,
         identification_fail_after: int = 5,
         banner_match: BannerMatchService | None = None,
+        upper_template: np.ndarray | None = None,
     ) -> None:
         self._pipeline = pipeline
         self._state = state_machine
@@ -103,6 +112,11 @@ class AnalysisService:
         self._id_tracker = SongIdentificationTracker(fail_after=identification_fail_after)
         # 2 次認識器: バナー特徴量マッチ（FR-BAN-001、v2.0）
         self._banner_match = banner_match
+        # SELECT 画面 UPPER マークテンプレ（FR-BAN-002、v2.0）。
+        # None のときは UPPER 判定は常に False で動作する。
+        self._upper_template = upper_template
+        # SELECT 画面の連続フレーム多数決（カーソル移動安定化用）
+        self._select_chart_stab = SongStabilizer(window=5, min_majority=0.6)
 
     def analyze(self, frame_bgr: np.ndarray) -> AnalysisResult:
         # 楽曲特定済み or 検出失敗確定済みなら楽曲名 OCR をスキップして
@@ -204,12 +218,21 @@ class AnalysisService:
                 result_clear_type=rm.clear_type.value if rm.clear_type else None,
             )
 
+        # SELECT 画面: バナー特徴量マッチ + UPPER/難易度色から chart_id を確定（FR-BAN-002）
+        select_chart: Chart | None = None
+        if screen == ScreenType.SELECT and self._banner_match is not None:
+            select_chart = self._identify_select_chart(frame_bgr)
+        else:
+            # SELECT 画面以外に出たら多数決バッファをリセット
+            self._select_chart_stab.reset()
+
         # その他画面: 楽曲・状態のみ
         return AnalysisResult(
             screen=screen,
             confidence=analysis.detection.confidence,
             raw_song_text=self._last_raw_song_text,
             identified_chart=self._last_chart,
+            select_chart=select_chart,
         )
 
     def reset(self) -> None:
@@ -219,6 +242,74 @@ class AnalysisService:
         self._last_chart = None
         self._last_raw_song_text = None
         self._id_tracker.reset()
+        self._select_chart_stab.reset()
+
+    def _identify_select_chart(self, frame_bgr: np.ndarray) -> Chart | None:
+        """SELECT 画面のカーソル位置楽曲を chart_id 単位で確定する（FR-BAN-002）。
+
+        フロー:
+        1. SELECT_ROI["banner"] でバナー特徴量マッチ → song_id 取得
+        2. SELECT_ROI["difficulty_color"] で難易度色判定 → Difficulty
+        3. SELECT_ROI["upper_mark"] でテンプレマッチ → is_upper
+        4. master の Song から (difficulty, is_upper) に該当する Chart を選ぶ
+        5. SongStabilizer で連続フレーム多数決
+
+        いずれかが取れなければ None。多数決が安定するまでも None。
+        """
+        if self._banner_match is None:
+            return None
+        try:
+            match = self._banner_match.identify(
+                frame_bgr=frame_bgr, roi=SELECT_ROI["banner"]
+            )
+        except Exception:
+            logger.warning(
+                "banner match raised during SELECT identify", exc_info=True
+            )
+            return None
+        if match is None or not match.accepted:
+            # 楽曲未確定 → 多数決バッファに None を投じてリセット気味に
+            self._select_chart_stab.push(None)
+            return None
+        song = self._master.get_song(match.song_id)
+        if song is None:
+            logger.warning(
+                "SELECT: banner matched song_id %s but not found in master DB",
+                match.song_id,
+            )
+            return None
+
+        difficulty = detect_difficulty_color(frame_bgr)
+        if difficulty is None:
+            # 難易度色が読めないと chart_id を確定できないので None
+            self._select_chart_stab.push(None)
+            return None
+
+        is_upper = False
+        if self._upper_template is not None:
+            is_upper, _ = detect_upper_mark(frame_bgr, self._upper_template)
+
+        # song.charts から (difficulty, is_upper) に該当する譜面を選ぶ
+        target = None
+        for c in song.charts:
+            if c.difficulty == difficulty and c.is_upper == is_upper:
+                target = c
+                break
+        if target is None:
+            # 該当譜面が master にない（has_upper=False の楽曲で is_upper=True を
+            # 検出した等）。is_upper のみフォールバックして再試行する。
+            for c in song.charts:
+                if c.difficulty == difficulty:
+                    target = c
+                    break
+        if target is None:
+            return None
+
+        # 多数決で安定化（カーソル移動中の瞬間取得を防ぐ）
+        stable_id = self._select_chart_stab.push(target.chart_id)
+        if stable_id != target.chart_id:
+            return None
+        return target
 
     def _identify_by_banner(
         self,
