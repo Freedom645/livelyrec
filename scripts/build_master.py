@@ -60,7 +60,7 @@ def fetch_official(url: str = OFFICIAL_URL, timeout: float = 30.0) -> list[tuple
         rows = t.find_all("tr")
         if not rows:
             continue
-        header_cells = [c.get_text(strip=True) for c in rows[0].find_all(["th", "td"])]
+        header_cells = [_cell_text(c) for c in rows[0].find_all(["th", "td"])]
         is_song_table = (
             len(header_cells) >= 2
             and (
@@ -70,7 +70,7 @@ def fetch_official(url: str = OFFICIAL_URL, timeout: float = 30.0) -> list[tuple
         )
         data_rows = rows[1:] if is_song_table else rows
         for r in data_rows:
-            cells = [c.get_text(strip=True) for c in r.find_all(["th", "td"])]
+            cells = [_cell_text(c) for c in r.find_all(["th", "td"])]
             if len(cells) < 2:
                 continue
             title, artist = cells[0], cells[1]
@@ -81,6 +81,22 @@ def fetch_official(url: str = OFFICIAL_URL, timeout: float = 30.0) -> list[tuple
             seen.add(title)
             songs.append((title, artist))
     return songs
+
+
+def _cell_text(cell) -> str:
+    """テーブルセルからテキストを抽出する。脚注用 `<sup>` 要素は除外する。
+
+    公式サイトの楽曲一覧では「*初移植曲」等の脚注が `<sup>` で表示されており、
+    `get_text(strip=True)` だとタイトル本体に脚注が連結されてしまう（v2.0 で
+    検出された 19 件の混入バグ）。本関数で `<sup>` を decompose してから
+    テキスト抽出する。
+    """
+    # cell の浅いコピーを作るのではなく、`<sup>` を取り除いた後に get_text
+    # する形に統一する。BeautifulSoup の Tag は破壊的編集が可能で、副作用が
+    # 残り得るが、本関数は短命ループで使われるため許容する。
+    for sup in cell.find_all("sup"):
+        sup.decompose()
+    return cell.get_text(strip=True)
 
 
 def build_master(songs: list[tuple[str, str]]) -> dict:
