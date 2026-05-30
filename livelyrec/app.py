@@ -297,10 +297,22 @@ def main() -> int:
     except Exception:
         logger.exception("OCR warm-up failed")
     digit = DigitTemplateRecognizer.load_from_dir(paths.templates_dir / "digits" / "1366x768")
+    # クリアタイプ判定用テンプレート（v0.1.2、装飾フォント対応）
+    from livelyrec.infrastructure.recognizer.clear_type_recognizer import (
+        load_clear_type_templates,
+    )
+    clear_type_templates = load_clear_type_templates(
+        paths.templates_dir / "result" / "clear_type"
+    )
+    logger.info(
+        "clear_type templates loaded: %d types",
+        len(clear_type_templates),
+    )
     pipeline = RecognitionPipeline(
         ocr=ocr,
         digit_recognizer=digit,
         screen_signatures_path=paths.templates_dir / "screen_signatures.npz",
+        clear_type_templates=clear_type_templates,
     )
 
     # サービス層

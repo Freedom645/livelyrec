@@ -32,10 +32,18 @@ class FrameAnalysis:
 class RecognitionPipeline:
     """フレーム1枚に対する解析を行う。"""
 
-    def __init__(self, ocr, digit_recognizer, screen_signatures_path=None) -> None:
+    def __init__(
+        self,
+        ocr,
+        digit_recognizer,
+        screen_signatures_path=None,
+        clear_type_templates: dict | None = None,
+    ) -> None:
         self._ocr = ocr
         self._digit = digit_recognizer
         self._screen = ScreenDetector(ocr, signatures_path=screen_signatures_path)
+        # クリアタイプ用テンプレート（装飾フォント対応、v0.1.2 追加）
+        self._clear_type_templates = clear_type_templates or {}
 
     def analyze(
         self,
@@ -64,7 +72,8 @@ class RecognitionPipeline:
                 )
             elif detection.screen == ScreenType.RESULT:
                 result = extract_result_metrics(
-                    norm.image_bgr, self._ocr, self._digit
+                    norm.image_bgr, self._ocr, self._digit,
+                    clear_type_templates=self._clear_type_templates,
                 )
         except Exception as e:
             logger.warning("metric extraction failed: %s", e)

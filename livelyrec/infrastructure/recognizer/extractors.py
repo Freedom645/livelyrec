@@ -189,7 +189,22 @@ def extract_play_metrics(
     )
 
 
-def _detect_clear_type(roi_bgr: np.ndarray, ocr) -> ClearType | None:
+def _detect_clear_type(
+    roi_bgr: np.ndarray,
+    ocr,
+    clear_type_templates: dict | None = None,
+) -> ClearType | None:
+    """クリアタイプを判定する。
+
+    優先: テンプレートマッチング（装飾フォント対応、推奨）。
+    フォールバック: OCR 文字列マッチ（既存ロジック、テンプレ未配備時の互換）。
+    """
+    if clear_type_templates:
+        from .clear_type_recognizer import detect_clear_type
+        ct = detect_clear_type(roi_bgr, clear_type_templates)
+        if ct is not None:
+            return ct
+        # テンプレマッチ失敗時は OCR フォールバックも試す（保険）
     text = ocr.recognize_text(roi_bgr).upper()
     if "PERFECT" in text:
         return ClearType.PERFECT
@@ -224,12 +239,18 @@ def extract_result_metrics(
     frame_bgr: np.ndarray,
     ocr,
     digit_recognizer,
+    clear_type_templates: dict | None = None,
 ) -> ResultMetrics:
     """リザルト画面のメトリクスを抽出する。
 
     score/combo/判定数は装飾フォントのため digit テンプレートマッチングで取得する（I-016）。
+    clear_type はテンプレートマッチング（`clear_type_templates`）で取得する。
+    テンプレ未配備時は OCR フォールバック（旧挙動）。
     """
-    clear_type = _detect_clear_type(crop(frame_bgr, RESULT_ROI["clear_label"]), ocr)
+    clear_type = _detect_clear_type(
+        crop(frame_bgr, RESULT_ROI["clear_label"]), ocr,
+        clear_type_templates=clear_type_templates,
+    )
 
     score = _recognize_digits(
         crop(frame_bgr, RESULT_ROI["score"]), digit_recognizer, "score", ocr
