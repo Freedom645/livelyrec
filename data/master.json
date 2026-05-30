@@ -1,5 +1,5 @@
 {
-  "version": "2026-05-30T15:33:21Z",
+  "version": "2026-05-30T15:37:37Z",
   "source": "https://p.eagate.573.jp/game/eacpopn/lively/info/music.html",
   "songs": [
     {
@@ -2715,32 +2715,6 @@
       ]
     },
     {
-      "song_id": "popn-ca6b2dc17d",
-      "title": "革命パッショネイト(UPPER)",
-      "title_norm": "革命ぱっしょねいと(upper)",
-      "artist": "日向美ビタースイーツ♪",
-      "genre": null,
-      "has_upper": false,
-      "charts": [
-        {
-          "difficulty": "EASY",
-          "level": null
-        },
-        {
-          "difficulty": "NORMAL",
-          "level": null
-        },
-        {
-          "difficulty": "HYPER",
-          "level": null
-        },
-        {
-          "difficulty": "EX",
-          "level": null
-        }
-      ]
-    },
-    {
       "song_id": "popn-cf4e477daf",
       "title": "完全無欠の無重力ダイブ",
       "title_norm": "完全無欠の無重力だいぶ",
@@ -4831,32 +4805,6 @@
           "difficulty": "EX",
           "is_upper": true,
           "level": 50
-        }
-      ]
-    },
-    {
-      "song_id": "popn-b94d8cc77a",
-      "title": "Popperz Chronicle(UPPER)",
-      "title_norm": "popperzchronicle(upper)",
-      "artist": "pop'n masters",
-      "genre": null,
-      "has_upper": false,
-      "charts": [
-        {
-          "difficulty": "EASY",
-          "level": null
-        },
-        {
-          "difficulty": "NORMAL",
-          "level": null
-        },
-        {
-          "difficulty": "HYPER",
-          "level": null
-        },
-        {
-          "difficulty": "EX",
-          "level": null
         }
       ]
     },
@@ -9041,188 +8989,6 @@
         }
       ],
       "genre_jp": "カウガールソング"
-    },
-    {
-      "song_id": "popn-f3aaed3cc9",
-      "title": "Butter-FLY(UPPER)",
-      "title_norm": "butter-fly(upper)",
-      "artist": "♪♪♪♪♪",
-      "genre": null,
-      "has_upper": false,
-      "charts": [
-        {
-          "difficulty": "EASY",
-          "level": null
-        },
-        {
-          "difficulty": "NORMAL",
-          "level": null
-        },
-        {
-          "difficulty": "HYPER",
-          "level": null
-        },
-        {
-          "difficulty": "EX",
-          "level": null
-        }
-      ]
-    },
-    {
-      "song_id": "popn-57fc328b89",
-      "title": "GET WILD(UPPER)",
-      "title_norm": "getwild(upper)",
-      "artist": "NMR",
-      "genre": null,
-      "has_upper": false,
-      "charts": [
-        {
-          "difficulty": "EASY",
-          "level": null
-        },
-        {
-          "difficulty": "NORMAL",
-          "level": null
-        },
-        {
-          "difficulty": "HYPER",
-          "level": null
-        },
-        {
-          "difficulty": "EX",
-          "level": null
-        }
-      ]
-    },
-    {
-      "song_id": "popn-a2158c6d91",
-      "title": "only my railgun(UPPER)",
-      "title_norm": "onlymyrailgun(upper)",
-      "artist": "♪♪♪♪♪",
-      "genre": null,
-      "has_upper": false,
-      "charts": [
-        {
-          "difficulty": "EASY",
-          "level": null
-        },
-        {
-          "difficulty": "NORMAL",
-          "level": null
-        },
-        {
-          "difficulty": "HYPER",
-          "level": null
-        },
-        {
-          "difficulty": "EX",
-          "level": null
-        }
-      ]
-    },
-    {
-      "song_id": "popn-6ce00018ec",
-      "title": "シュガーソングとビターステップ(UPPER)",
-      "title_norm": "しゅがーそんぐとびたーすてっぷ(upper)",
-      "artist": "♪♪♪♪♪",
-      "genre": null,
-      "has_upper": false,
-      "charts": [
-        {
-          "difficulty": "EASY",
-          "level": null
-        },
-        {
-          "difficulty": "NORMAL",
-          "level": null
-        },
-        {
-          "difficulty": "HYPER",
-          "level": null
-        },
-        {
-          "difficulty": "EX",
-          "level": null
-        }
-      ]
-    },
-    {
-      "song_id": "popn-8d7546a110",
-      "title": "夏祭り(UPPER)",
-      "title_norm": "夏祭り(upper)",
-      "artist": "♪♪♪♪♪",
-      "genre": null,
-      "has_upper": false,
-      "charts": [
-        {
-          "difficulty": "EASY",
-          "level": null
-        },
-        {
-          "difficulty": "NORMAL",
-          "level": null
-        },
-        {
-          "difficulty": "HYPER",
-          "level": null
-        },
-        {
-          "difficulty": "EX",
-          "level": null
-        }
-      ]
-    },
-    {
-      "song_id": "popn-d70fa89e17",
-      "title": "残酷な天使のテーゼ(UPPER)",
-      "title_norm": "残酷な天使のてーぜ(upper)",
-      "artist": "♪♪♪♪♪",
-      "genre": null,
-      "has_upper": false,
-      "charts": [
-        {
-          "difficulty": "EASY",
-          "level": null
-        },
-        {
-          "difficulty": "NORMAL",
-          "level": null
-        },
-        {
-          "difficulty": "HYPER",
-          "level": null
-        },
-        {
-          "difficulty": "EX",
-          "level": null
-        }
-      ]
-    },
-    {
-      "song_id": "popn-09b37af66a",
-      "title": "創聖のアクエリオン(UPPER)",
-      "title_norm": "創聖のあくえりおん(upper)",
-      "artist": "♪♪♪♪♪",
-      "genre": null,
-      "has_upper": false,
-      "charts": [
-        {
-          "difficulty": "EASY",
-          "level": null
-        },
-        {
-          "difficulty": "NORMAL",
-          "level": null
-        },
-        {
-          "difficulty": "HYPER",
-          "level": null
-        },
-        {
-          "difficulty": "EX",
-          "level": null
-        }
-      ]
     },
     {
       "song_id": "popn-17b4d14a59",
@@ -14517,32 +14283,6 @@
       "genre_jp": "うそつき▽ハイパーロッケンローレ"
     },
     {
-      "song_id": "popn-3d7b370abd",
-      "title": "エイプリルフールの唄(UPPER)",
-      "title_norm": "えいぷりるふーるの唄(upper)",
-      "artist": "AKIRA YAMAOKA",
-      "genre": null,
-      "has_upper": false,
-      "charts": [
-        {
-          "difficulty": "EASY",
-          "level": null
-        },
-        {
-          "difficulty": "NORMAL",
-          "level": null
-        },
-        {
-          "difficulty": "HYPER",
-          "level": null
-        },
-        {
-          "difficulty": "EX",
-          "level": null
-        }
-      ]
-    },
-    {
       "song_id": "popn-ecd506b4ea",
       "title": "マッシュな部屋",
       "title_norm": "まっしゅな部屋",
@@ -15540,136 +15280,6 @@
       "genre_jp": "スイーツポップ"
     },
     {
-      "song_id": "popn-85b15140d6",
-      "title": "ホーンテッド★メイドランチ(UPPER)",
-      "title_norm": "ほーんてっどめいどらんち(upper)",
-      "artist": "日向美ビタースイーツ♪",
-      "genre": null,
-      "has_upper": false,
-      "charts": [
-        {
-          "difficulty": "EASY",
-          "level": null
-        },
-        {
-          "difficulty": "NORMAL",
-          "level": null
-        },
-        {
-          "difficulty": "HYPER",
-          "level": null
-        },
-        {
-          "difficulty": "EX",
-          "level": null
-        }
-      ]
-    },
-    {
-      "song_id": "popn-43ad62cd8d",
-      "title": "めうめうぺったんたん！！(UPPER)",
-      "title_norm": "めうめうぺったんたん(upper)",
-      "artist": "日向美ビタースイーツ♪",
-      "genre": null,
-      "has_upper": false,
-      "charts": [
-        {
-          "difficulty": "EASY",
-          "level": null
-        },
-        {
-          "difficulty": "NORMAL",
-          "level": null
-        },
-        {
-          "difficulty": "HYPER",
-          "level": null
-        },
-        {
-          "difficulty": "EX",
-          "level": null
-        }
-      ]
-    },
-    {
-      "song_id": "popn-5dcf97b642",
-      "title": "カタルシスの月(UPPER)",
-      "title_norm": "かたるしすの月(upper)",
-      "artist": "日向美ビタースイーツ♪",
-      "genre": null,
-      "has_upper": false,
-      "charts": [
-        {
-          "difficulty": "EASY",
-          "level": null
-        },
-        {
-          "difficulty": "NORMAL",
-          "level": null
-        },
-        {
-          "difficulty": "HYPER",
-          "level": null
-        },
-        {
-          "difficulty": "EX",
-          "level": null
-        }
-      ]
-    },
-    {
-      "song_id": "popn-34a099992c",
-      "title": "乙女繚乱 舞い咲き誇れ(UPPER)",
-      "title_norm": "乙女繚乱舞い咲き誇れ(upper)",
-      "artist": "日向美ビタースイーツ♪",
-      "genre": null,
-      "has_upper": false,
-      "charts": [
-        {
-          "difficulty": "EASY",
-          "level": null
-        },
-        {
-          "difficulty": "NORMAL",
-          "level": null
-        },
-        {
-          "difficulty": "HYPER",
-          "level": null
-        },
-        {
-          "difficulty": "EX",
-          "level": null
-        }
-      ]
-    },
-    {
-      "song_id": "popn-01a90c02c3",
-      "title": "ちくわパフェだよ☆ＣＫＰ(UPPER)",
-      "title_norm": "ちくわぱふぇだよckp(upper)",
-      "artist": "日向美ビタースイーツ♪",
-      "genre": null,
-      "has_upper": false,
-      "charts": [
-        {
-          "difficulty": "EASY",
-          "level": null
-        },
-        {
-          "difficulty": "NORMAL",
-          "level": null
-        },
-        {
-          "difficulty": "HYPER",
-          "level": null
-        },
-        {
-          "difficulty": "EX",
-          "level": null
-        }
-      ]
-    },
-    {
       "song_id": "popn-d74f2506e0",
       "title": "ANEMONE",
       "title_norm": "anemone",
@@ -16042,32 +15652,6 @@
           "difficulty": "EX",
           "is_upper": false,
           "level": 45
-        }
-      ]
-    },
-    {
-      "song_id": "popn-3eb56a1b94",
-      "title": "perditus†paradisus(UPPER)",
-      "title_norm": "perditus†paradisus(upper)",
-      "artist": "iconoclasm",
-      "genre": null,
-      "has_upper": false,
-      "charts": [
-        {
-          "difficulty": "EASY",
-          "level": null
-        },
-        {
-          "difficulty": "NORMAL",
-          "level": null
-        },
-        {
-          "difficulty": "HYPER",
-          "level": null
-        },
-        {
-          "difficulty": "EX",
-          "level": null
         }
       ]
     },
@@ -18893,32 +18477,6 @@
       ]
     },
     {
-      "song_id": "popn-fbe97f2c64",
-      "title": "少年リップルズ(UPPER)",
-      "title_norm": "少年りっぷるず(upper)",
-      "artist": "常盤ゆう",
-      "genre": null,
-      "has_upper": false,
-      "charts": [
-        {
-          "difficulty": "EASY",
-          "level": null
-        },
-        {
-          "difficulty": "NORMAL",
-          "level": null
-        },
-        {
-          "difficulty": "HYPER",
-          "level": null
-        },
-        {
-          "difficulty": "EX",
-          "level": null
-        }
-      ]
-    },
-    {
       "song_id": "popn-b6e161bc0d",
       "title": "不可説不可説転",
       "title_norm": "不可説不可説転",
@@ -21294,32 +20852,6 @@
       ]
     },
     {
-      "song_id": "popn-b56ef47992",
-      "title": "子供の落書き帳(UPPER)",
-      "title_norm": "子供の落書き帳(upper)",
-      "artist": "佐々木博史",
-      "genre": null,
-      "has_upper": false,
-      "charts": [
-        {
-          "difficulty": "EASY",
-          "level": null
-        },
-        {
-          "difficulty": "NORMAL",
-          "level": null
-        },
-        {
-          "difficulty": "HYPER",
-          "level": null
-        },
-        {
-          "difficulty": "EX",
-          "level": null
-        }
-      ]
-    },
-    {
       "song_id": "popn-179dc80e50",
       "title": "葬送のエウロパ",
       "title_norm": "葬送のえうろぱ",
@@ -22110,32 +21642,6 @@
         }
       ],
       "genre_jp": "ネオクラシカル・ヘヴィメタル"
-    },
-    {
-      "song_id": "popn-6e42e58daa",
-      "title": "Aithon(UPPER)",
-      "title_norm": "aithon(upper)",
-      "artist": "Kozo Nakamura",
-      "genre": null,
-      "has_upper": false,
-      "charts": [
-        {
-          "difficulty": "EASY",
-          "level": null
-        },
-        {
-          "difficulty": "NORMAL",
-          "level": null
-        },
-        {
-          "difficulty": "HYPER",
-          "level": null
-        },
-        {
-          "difficulty": "EX",
-          "level": null
-        }
-      ]
     },
     {
       "song_id": "popn-56a0af8c29",
@@ -23682,32 +23188,6 @@
         }
       ],
       "genre_jp": "ギャラクティックマーチ"
-    },
-    {
-      "song_id": "popn-bd6b08f528",
-      "title": "MADSPEED狂信道(UPPER)",
-      "title_norm": "madspeed狂信道(upper)",
-      "artist": "cosMo＠暴走Ultimate",
-      "genre": null,
-      "has_upper": false,
-      "charts": [
-        {
-          "difficulty": "EASY",
-          "level": null
-        },
-        {
-          "difficulty": "NORMAL",
-          "level": null
-        },
-        {
-          "difficulty": "HYPER",
-          "level": null
-        },
-        {
-          "difficulty": "EX",
-          "level": null
-        }
-      ]
     },
     {
       "song_id": "popn-6a64fcd967",
@@ -26240,32 +25720,6 @@
       "genre_jp": "インボルク"
     },
     {
-      "song_id": "popn-ddb55f9c6d",
-      "title": "生命の焔纏いて(UPPER)",
-      "title_norm": "生命の焔纏いて(upper)",
-      "artist": "WALPULG",
-      "genre": null,
-      "has_upper": false,
-      "charts": [
-        {
-          "difficulty": "EASY",
-          "level": null
-        },
-        {
-          "difficulty": "NORMAL",
-          "level": null
-        },
-        {
-          "difficulty": "HYPER",
-          "level": null
-        },
-        {
-          "difficulty": "EX",
-          "level": null
-        }
-      ]
-    },
-    {
       "song_id": "popn-7f0c18a252",
       "title": "天庭 おとこのこ編",
       "title_norm": "天庭おとこのこ編",
@@ -28236,32 +27690,6 @@
         }
       ],
       "genre_jp": "アジアンコンチェルトREMIX"
-    },
-    {
-      "song_id": "popn-d0ff590642",
-      "title": "鳳凰～Chinese Phoenix Mix～(UPPER)",
-      "title_norm": "鳳凰~chinesephoenixmix~(upper)",
-      "artist": "菜楊 arranged by Mutsuhiko Izumi",
-      "genre": null,
-      "has_upper": false,
-      "charts": [
-        {
-          "difficulty": "EASY",
-          "level": null
-        },
-        {
-          "difficulty": "NORMAL",
-          "level": null
-        },
-        {
-          "difficulty": "HYPER",
-          "level": null
-        },
-        {
-          "difficulty": "EX",
-          "level": null
-        }
-      ]
     },
     {
       "song_id": "popn-b01e61ef61",
@@ -33428,32 +32856,6 @@
         }
       ],
       "genre_jp": "前方後円ビーツ"
-    },
-    {
-      "song_id": "popn-525bceb8ae",
-      "title": "序(UPPER)",
-      "title_norm": "序(upper)",
-      "artist": "かむがたりべ",
-      "genre": null,
-      "has_upper": false,
-      "charts": [
-        {
-          "difficulty": "EASY",
-          "level": null
-        },
-        {
-          "difficulty": "NORMAL",
-          "level": null
-        },
-        {
-          "difficulty": "HYPER",
-          "level": null
-        },
-        {
-          "difficulty": "EX",
-          "level": null
-        }
-      ]
     },
     {
       "song_id": "popn-9c2d016f78",

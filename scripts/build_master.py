@@ -106,10 +106,20 @@ _TITLE_ANNOTATION_RE = re.compile(
     r"\s*\*(?:特別ボーナス曲|初移植曲)\s*$"
 )
 
+# 末尾の "(UPPER)" は譜面区別の表記であり楽曲名の一部ではない。
+# 通常譜面と UPPER 譜面は同一 song_id 下の charts[].is_upper=True で表現する
+# ため、楽曲名からは除去して通常エントリへマージする。
+_UPPER_SUFFIX_RE = re.compile(r"\s*\(UPPER\)\s*$", re.IGNORECASE)
+
 
 def _strip_title_annotations(title: str) -> str:
-    """楽曲名末尾の注釈テキスト（*特別ボーナス曲 / *初移植曲）を除去する。"""
+    """楽曲名末尾の注釈テキスト（*特別ボーナス曲 / *初移植曲 / (UPPER)）を除去する。
+
+    "(UPPER)" は譜面区別のための表記であり、master.json では同一 song_id の
+    charts[].is_upper=True で扱うため、楽曲名からは除去する。
+    """
     cleaned = _TITLE_ANNOTATION_RE.sub("", title)
+    cleaned = _UPPER_SUFFIX_RE.sub("", cleaned)
     return cleaned.strip()
 
 
