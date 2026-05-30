@@ -105,6 +105,54 @@ class TestDetectUpperMark:
         assert is_upper is False
         assert score == 0.0
 
+    def test_left_template_matches_when_right_absent(self) -> None:
+        """UPPER マークが左側のみに表示されているサンプルでも検出できる。
+
+        実機で UPPER マークは譜面ごとに右側／左側どちらかに固定表示される
+        ため、右側だけでなく左側用テンプレも使えるか確認する（2026-05-31）。
+        """
+        repo_root = Path(__file__).resolve().parents[2]
+        left_tpl_path = repo_root / "templates" / "select" / "upper_mark_left.png"
+        right_tpl_path = repo_root / "templates" / "select" / "upper_mark.png"
+        if not left_tpl_path.exists():
+            pytest.skip("upper_mark_left.png not bundled")
+        left_tpl = load_upper_template(left_tpl_path)
+        right_tpl = load_upper_template(right_tpl_path)
+
+        # 左 ROI に左テンプレを貼り込んだフレームを構成（右側はベタ塗り = マッチしない）
+        x1, y1, x2, y2 = SELECT_ROI["upper_mark_left"]
+        patch = cv2.cvtColor(left_tpl, cv2.COLOR_GRAY2BGR)
+        frame = np.zeros((768, 1366, 3), dtype=np.uint8)
+        frame[y1:y2, x1:x2] = patch
+
+        # 右テンプレだけ渡した場合は検出されない
+        is_upper, _ = detect_upper_mark(frame, right_tpl)
+        assert is_upper is False
+        # 左テンプレを併用すると検出される
+        is_upper, score = detect_upper_mark(
+            frame, right_tpl, template_gray_left=left_tpl
+        )
+        assert is_upper is True
+        assert score > 0.99
+
+    def test_right_template_match_still_works_with_left_arg(self) -> None:
+        """右側マッチは template_gray_left を渡しても従来どおり動作する。"""
+        repo_root = Path(__file__).resolve().parents[2]
+        right_tpl = load_upper_template(
+            repo_root / "templates" / "select" / "upper_mark.png"
+        )
+        left_path = repo_root / "templates" / "select" / "upper_mark_left.png"
+        left_tpl = load_upper_template(left_path) if left_path.exists() else None
+        patch = cv2.cvtColor(right_tpl, cv2.COLOR_GRAY2BGR)
+        frame = np.zeros((768, 1366, 3), dtype=np.uint8)
+        x1, y1, x2, y2 = SELECT_ROI["upper_mark"]
+        frame[y1:y2, x1:x2] = patch
+        is_upper, score = detect_upper_mark(
+            frame, right_tpl, template_gray_left=left_tpl
+        )
+        assert is_upper is True
+        assert score > 0.99
+
 
 # ---- 難易度色検出 ----
 

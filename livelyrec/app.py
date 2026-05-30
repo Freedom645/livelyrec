@@ -354,30 +354,38 @@ def main() -> int:
     )
 
     # SELECT 画面の UPPER 譜面検出用テンプレ（FR-BAN-002、v2.0）。
-    # 同梱配布物（templates/select/upper_mark.png）を読み込み。
+    # 同梱配布物（templates/select/upper_mark.png / upper_mark_left.png）を読み込み。
+    # 譜面ごとに右側・左側どちらに表示されるか規則性不明のため両方ロード。
     # 未配備時は None を渡し、UPPER 判定は常に False で動作する。
     upper_template = None
-    upper_template_path = paths.templates_dir / "select" / "upper_mark.png"
-    if upper_template_path.exists():
-        try:
-            from livelyrec.infrastructure.recognizer.select_screen import (
-                load_upper_template,
-            )
-            upper_template = load_upper_template(upper_template_path)
-            logger.info("upper template loaded: %s", upper_template_path)
-        except Exception:
-            logger.exception("upper template load failed; UPPER detection disabled")
-    else:
-        logger.info(
-            "upper template not found at %s; UPPER detection disabled",
-            upper_template_path,
-        )
+    upper_template_left = None
+    from livelyrec.infrastructure.recognizer.select_screen import (
+        load_upper_template,
+    )
+    for var_name, file_name in (
+        ("upper_template", "upper_mark.png"),
+        ("upper_template_left", "upper_mark_left.png"),
+    ):
+        path = paths.templates_dir / "select" / file_name
+        if path.exists():
+            try:
+                tpl = load_upper_template(path)
+                if var_name == "upper_template":
+                    upper_template = tpl
+                else:
+                    upper_template_left = tpl
+                logger.info("upper template loaded: %s", path)
+            except Exception:
+                logger.exception("upper template load failed: %s", path)
+        else:
+            logger.info("upper template not found at %s", path)
 
     state = StateMachine()
     analysis = AnalysisService(
         pipeline, state, master,
         banner_match=banner_match,
         upper_template=upper_template,
+        upper_template_left=upper_template_left,
     )
 
     obs = OBSClient(ObsConfig(

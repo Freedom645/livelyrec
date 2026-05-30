@@ -100,6 +100,7 @@ class AnalysisService:
         identification_fail_after: int = 5,
         banner_match: BannerMatchService | None = None,
         upper_template: np.ndarray | None = None,
+        upper_template_left: np.ndarray | None = None,
     ) -> None:
         self._pipeline = pipeline
         self._state = state_machine
@@ -113,8 +114,11 @@ class AnalysisService:
         # 2 次認識器: バナー特徴量マッチ（FR-BAN-001、v2.0）
         self._banner_match = banner_match
         # SELECT 画面 UPPER マークテンプレ（FR-BAN-002、v2.0）。
-        # None のときは UPPER 判定は常に False で動作する。
+        # UPPER マークは譜面ごとに右側・左側どちらかに表示されるため両方注入する
+        # （2026-05-31、実機サンプルで両側パターン確認）。
+        # 右側のみ、左側のみ、両方なしのいずれもサポート。
         self._upper_template = upper_template
+        self._upper_template_left = upper_template_left
         # SELECT 画面の連続フレーム多数決（カーソル移動安定化用）
         self._select_chart_stab = SongStabilizer(window=5, min_majority=0.6)
 
@@ -287,7 +291,11 @@ class AnalysisService:
 
         is_upper = False
         if self._upper_template is not None:
-            is_upper, _ = detect_upper_mark(frame_bgr, self._upper_template)
+            is_upper, _ = detect_upper_mark(
+                frame_bgr,
+                self._upper_template,
+                template_gray_left=self._upper_template_left,
+            )
 
         # song.charts から (difficulty, is_upper) に該当する譜面を選ぶ
         target = None

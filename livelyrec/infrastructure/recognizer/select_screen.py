@@ -68,33 +68,58 @@ def _crop_roi(frame_bgr: np.ndarray, roi_key: str) -> np.ndarray | None:
     return frame_bgr[y1:y2, x1:x2]
 
 
+def _match_template_at_roi(
+    frame_bgr: np.ndarray,
+    roi_key: str,
+    template_gray: np.ndarray,
+) -> float:
+    """指定 ROI でテンプレートマッチを試行し、最大相関スコアを返す。
+
+    ROI 範囲外・テンプレ形状不一致・読込不能のときは 0.0 を返す（安全側）。
+    """
+    crop = _crop_roi(frame_bgr, roi_key)
+    if crop is None:
+        return 0.0
+    gray = cv2.cvtColor(crop, cv2.COLOR_BGR2GRAY)
+    if gray.shape != template_gray.shape:
+        logger.warning(
+            "%s ROI shape %s != template shape %s",
+            roi_key, gray.shape, template_gray.shape,
+        )
+        return 0.0
+    res = cv2.matchTemplate(gray, template_gray, cv2.TM_CCOEFF_NORMED)
+    _, score, _, _ = cv2.minMaxLoc(res)
+    return float(score)
+
+
 def detect_upper_mark(
     frame_bgr: np.ndarray,
     template_gray: np.ndarray,
+    template_gray_left: np.ndarray | None = None,
     threshold: float = DEFAULT_UPPER_MATCH_THRESHOLD,
 ) -> tuple[bool, float]:
     """SELECT 画面で UPPER 譜面が選択されているかをテンプレートマッチで判定。
 
+    UPPER マークは譜面ごとに固定で「右側」または「左側」に表示される（規則性
+    不明、実機サンプルで両側パターン確認、2026-05-31）。`template_gray` で
+    右側用テンプレ、`template_gray_left` で左側用テンプレを渡し、どちらかの
+    ROI で相関スコアがしきい値超えなら is_upper=True とする。
+
     Returns:
         (is_upper, score)
-        - is_upper: 相関スコアがしきい値以上なら True
-        - score: cv2.TM_CCOEFF_NORMED の最大相関スコア（-1.0〜1.0）
-        - 範囲外フレーム等で判定不能なら (False, 0.0)
+        - is_upper: 右側 or 左側のどちらかの ROI で相関スコアが
+          `threshold` 以上なら True
+        - score: 両側を試行した中の最大スコア（最良マッチ）
+        - 両側とも判定不能なら (False, 0.0)
     """
-    crop = _crop_roi(frame_bgr, "upper_mark")
-    if crop is None:
-        return False, 0.0
-    gray = cv2.cvtColor(crop, cv2.COLOR_BGR2GRAY)
-    if gray.shape != template_gray.shape:
-        # ROI とテンプレ形状が違うときは安全側で False を返す
-        logger.warning(
-            "upper_mark ROI shape %s != template shape %s",
-            gray.shape, template_gray.shape,
+    score_right = _match_template_at_roi(frame_bgr, "upper_mark", template_gray)
+    score_left = 0.0
+    if template_gray_left is not None:
+        score_left = _match_template_at_roi(
+            frame_bgr, "upper_mark_left", template_gray_left
         )
-        return False, 0.0
-    res = cv2.matchTemplate(gray, template_gray, cv2.TM_CCOEFF_NORMED)
-    _, score, _, _ = cv2.minMaxLoc(res)
-    return bool(score >= threshold), float(score)
+    best = max(score_right, score_left)
+    return bool(best >= threshold), best
 
 
 def detect_difficulty_color(
