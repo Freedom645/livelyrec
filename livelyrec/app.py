@@ -121,6 +121,51 @@ def _show_data_folder_error(paths: AppPaths, message: str) -> None:
         print(f"[fatal] {message}", file=sys.stderr)
 
 
+def _load_seed_if_needed(
+    master,
+    seed_path,
+    app_kv_repo,
+    logger: logging.Logger,
+) -> None:
+    """同梱 seed master.json を必要に応じて DB へロードする。
+
+    判定ルール:
+    1. seed ファイルが存在しない → 何もしない（WARN）
+    2. DB が空 → 必ずロード
+    3. seed の `version` フィールドが app_kv の `master_seed_version` と
+       異なる（or 未保存）→ ロード（アプリ更新時の自動反映）
+    4. 上記いずれにも当てはまらない → スキップ
+
+    ロード成功時は app_kv に新しい `master_seed_version` を保存する。
+    """
+    import json as _json
+
+    if not seed_path.exists():
+        logger.warning("master seed file not found: %s", seed_path)
+        return
+    try:
+        seed_doc = _json.loads(seed_path.read_text(encoding="utf-8"))
+    except (OSError, ValueError) as e:
+        logger.warning("master seed read failed: %s", e)
+        return
+    seed_version = seed_doc.get("version") or ""
+    stored_version = app_kv_repo.get("master_seed_version") or ""
+    db_empty = master.song_count() == 0
+    if not db_empty and seed_version == stored_version:
+        return  # 何もしない
+    try:
+        seeded = master.load_from_file(seed_path)
+        logger.info(
+            "master seeded from bundled file: %d songs "
+            "(seed_version=%s, stored=%s, db_empty=%s)",
+            seeded, seed_version, stored_version, db_empty,
+        )
+        if seed_version:
+            app_kv_repo.set("master_seed_version", seed_version)
+    except Exception:
+        logger.exception("master seed load failed")
+
+
 def _build_banner_match_service(
     settings,
     paths: AppPaths,
@@ -239,7 +284,7 @@ def main() -> int:
     session_repo = PlaySessionRepository(conn)
     result_repo = ResultRepository(conn)
     daily_repo = DailyCounterRepository(conn)
-    _ = AppKvRepository(conn)
+    app_kv_repo = AppKvRepository(conn)
 
     # 認識パイプライン
     from livelyrec.infrastructure.ocr.digit_template import DigitTemplateRecognizer
@@ -294,16 +339,10 @@ def main() -> int:
             logger.info("master refreshed from endpoint: %d songs", refreshed)
         except Exception:
             logger.exception("master refresh failed; falling back to bundled seed/cache")
-    # DB が空なら同梱の seed マスタを投入する（オフライン初回起動・未設定時の保険）。
-    if master.song_count() == 0:
-        if paths.master_seed_file.exists():
-            try:
-                seeded = master.load_from_file(paths.master_seed_file)
-                logger.info("master seeded from bundled file: %d songs", seeded)
-            except Exception:
-                logger.exception("master seed load failed")
-        else:
-            logger.warning("master seed file not found: %s", paths.master_seed_file)
+    # DB が空 or 同梱 seed のバージョンが DB の最終 seed バージョンより新しい場合に
+    # 同梱 seed を投入する（オフライン初回起動・未設定時の保険、および
+    # アプリ更新後の seed マスタ自動反映、2026-05-30 修正）。
+    _load_seed_if_needed(master, paths.master_seed_file, app_kv_repo, logger)
     # バナー特徴量マスタの取得とサービス組み立て（FR-BAN-001〜004、v2.0）。
     # 取得失敗・パース失敗・設定 OFF いずれも 2 次認識器を無効化して既存処理で継続。
     banner_match = _build_banner_match_service(
