@@ -20,6 +20,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import re
 import sys
 import time
 from datetime import UTC, datetime
@@ -84,19 +85,32 @@ def fetch_official(url: str = OFFICIAL_URL, timeout: float = 30.0) -> list[tuple
 
 
 def _cell_text(cell) -> str:
-    """テーブルセルからテキストを抽出する。脚注用 `<sup>` 要素は除外する。
+    """テーブルセルからテキストを抽出する。脚注用 `<sup>` 要素は除外し、
+    `<span>` 内に直書きされた末尾注釈もパターンで除去する。
 
-    公式サイトの楽曲一覧では「*初移植曲」等の脚注が `<sup>` で表示されており、
-    `get_text(strip=True)` だとタイトル本体に脚注が連結されてしまう（v2.0 で
-    検出された 19 件の混入バグ）。本関数で `<sup>` を decompose してから
-    テキスト抽出する。
+    公式サイトの楽曲一覧では脚注が複数形式で表示される:
+      - `<sup>*初移植曲</sup>` 形式 → decompose で除去（v2.0 修正）
+      - `<span style="...">title  *特別ボーナス曲</span>` 形式 → 末尾注釈の
+        テキスト除去で対応（2026-05-31 追加）
     """
-    # cell の浅いコピーを作るのではなく、`<sup>` を取り除いた後に get_text
-    # する形に統一する。BeautifulSoup の Tag は破壊的編集が可能で、副作用が
-    # 残り得るが、本関数は短命ループで使われるため許容する。
+    # 構造的脚注（<sup>）はそのまま decompose
     for sup in cell.find_all("sup"):
         sup.decompose()
-    return cell.get_text(strip=True)
+    text = cell.get_text(strip=True)
+    # 末尾注釈テキスト除去（既知パターン）
+    return _strip_title_annotations(text)
+
+
+# 公式サイトで楽曲名末尾に付与される注釈テキストの既知パターン
+_TITLE_ANNOTATION_RE = re.compile(
+    r"\s*\*(?:特別ボーナス曲|初移植曲)\s*$"
+)
+
+
+def _strip_title_annotations(title: str) -> str:
+    """楽曲名末尾の注釈テキスト（*特別ボーナス曲 / *初移植曲）を除去する。"""
+    cleaned = _TITLE_ANNOTATION_RE.sub("", title)
+    return cleaned.strip()
 
 
 def build_master(songs: list[tuple[str, str]]) -> dict:
