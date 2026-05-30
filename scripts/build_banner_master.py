@@ -170,6 +170,44 @@ def fetch_lively_page_links(rate_sec: float) -> list[str]:
     return titles
 
 
+def fetch_lively_songs_by_search(rate_sec: float) -> list[str]:
+    """remywiki の wikitext 全文検索 `insource:"pop'n music Lively"` で
+    Lively 収録楽曲ページを取得する（v4、2026-05-30）。
+
+    起点ページ方式（fetch_lively_page_links）では他機種初出曲（REFLEC BEAT
+    colette 等）のページが捕捉できない問題があり、wikitext 内に
+    `pop'n music Lively` を含むページを直接検索することで救済する。
+    収集対象は楽曲ページ（Song Information セクションあり）のみに後段で
+    フィルタされる。
+    """
+    titles: list[str] = []
+    seen: set[str] = set()
+    sroffset = 0
+    query = "insource:\"pop'n music Lively\""
+    while True:
+        url = (
+            f"{REMYWIKI_API}?action=query&format=json&list=search"
+            f"&srsearch={quote(query)}&srlimit=500&srwhat=text"
+            f"&sroffset={sroffset}"
+        )
+        data = http_json(url)
+        hits = data.get("query", {}).get("search", []) or []
+        if not hits:
+            break
+        for h in hits:
+            t = h.get("title")
+            if t and t not in seen:
+                seen.add(t)
+                titles.append(t)
+        nxt = data.get("continue", {}).get("sroffset")
+        if nxt is None:
+            break
+        sroffset = int(nxt)
+        time.sleep(rate_sec)
+    logger.info("insource search yielded %d lively-related pages", len(titles))
+    return titles
+
+
 def is_song_candidate(title: str) -> bool:
     if title in EXCLUDE_EXACT:
         return False
@@ -519,11 +557,26 @@ def main(argv: list[str]) -> int:
         logger.info("master enrich mode ON (genre/charts/upper を Wiki から補完)")
 
     logger.info("fetching links from %d source pages...", len(LIVELY_SOURCE_PAGES))
-    all_titles = fetch_lively_page_links(rate_sec=args.rate_sec)
-    candidates = [t for t in all_titles if is_song_candidate(t)]
+    link_titles = fetch_lively_page_links(rate_sec=args.rate_sec)
+    logger.info("source pages: %d raw links", len(link_titles))
+    # v4: 起点ページに含まれない楽曲（他機種初出など）を救うため、
+    # wikitext 検索 `insource:"pop'n music Lively"` の結果と和集合を取る
+    logger.info("fetching lively pages via wikitext search...")
+    search_titles = fetch_lively_songs_by_search(rate_sec=args.rate_sec)
+    seen_all: set[str] = set()
+    merged: list[str] = []
+    for t in (*link_titles, *search_titles):
+        if t not in seen_all:
+            seen_all.add(t)
+            merged.append(t)
     logger.info(
-        "candidates: %d (after dedup & meta-link filter, from %d raw links)",
-        len(candidates), len(all_titles),
+        "merged source: %d unique pages (links=%d + search=%d)",
+        len(merged), len(link_titles), len(search_titles),
+    )
+    candidates = [t for t in merged if is_song_candidate(t)]
+    logger.info(
+        "candidates: %d (after meta-link filter, from %d merged)",
+        len(candidates), len(merged),
     )
     if args.limit > 0:
         candidates = candidates[: args.limit]
