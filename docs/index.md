@@ -28,7 +28,6 @@ title: LivelyRec
 | [インストール](installation.html) | ダウンロードと初回起動 |
 | [使い方](usage.html) | 設定・記録開始・スコア確認・CSV 出力 |
 | [配信支援オーバーレイ](broadcast.html) | OBS ブラウザソースの設定（同一PC / LAN 別PC） |
-| [設計文書](https://github.com/Freedom645/livelyrec/tree/main/docs/design){:target="_blank"} | 要件定義・基本設計・詳細設計・テスト計画書 等の開発資料 |
 
 ## 動作環境
 

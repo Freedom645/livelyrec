@@ -5,8 +5,7 @@ on:
     branches:
       - main
     paths:
-      - 'README.md'
-      - '_config.yml'
+      - 'docs/**'
       - 'data/master.json'
       - 'data/banner_features.json'
       - '.github/workflows/pages.yml'
@@ -39,23 +38,23 @@ jobs:
       - name: Configure Pages
         uses: actions/configure-pages@v5
 
-      # アプリが起動時に取得する配信データをリポジトリルートへ配置し、
-      # Jekyll に静的ファイルとして取り込ませる（jekyll-build-pages は
-      # Docker 内 root で _site を作るため、ビルド後の cp は権限エラーに
-      # なる。ビルド前にルートへ置くことで _site/master.json 等として出力）。
+      # アプリが起動時に取得する配信データを docs/ 直下へ配置し、Jekyll に
+      # 静的ファイルとして取り込ませる（jekyll-build-pages は Docker 内 root
+      # で _site を作るため、ビルド後の cp は権限エラーになる。ビルド前に
+      # ソースへ置くことで _site/master.json 等として出力される）。
       - name: Stage distribution data
         shell: bash
         run: |
-          cp data/master.json ./master.json
-          cp data/banner_features.json ./banner_features.json
+          cp data/master.json docs/master.json
+          cp data/banner_features.json docs/banner_features.json
 
-      # 旧「Deploy from a branch」と同じ Jekyll パイプラインで README.md を
-      # 描画する。これにより元の Pages サイトと同一のテーマ・スタイル・
-      # リンクが復元される。出力は ./_site。
+      # 旧「Deploy from a branch（/docs）」と同じ Jekyll パイプラインで
+      # docs/ 配下（index.md / installation.md / usage.md / broadcast.md）を
+      # 描画する。docs/_config.yml のテーマ・設定がそのまま適用される。
       - name: Build with Jekyll
         uses: actions/jekyll-build-pages@v1
         with:
-          source: ./
+          source: ./docs
           destination: ./_site
 
       - name: Upload artifact

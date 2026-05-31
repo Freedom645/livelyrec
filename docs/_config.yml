@@ -3,6 +3,8 @@ description: pop'n music lively のスコア記録・配信支援を行うスタ
 theme: jekyll-theme-cayman
 lang: ja
 
-# Jekyll に処理させないファイル
+# Jekyll に処理させない / 公開しないファイル。
+# design/ 配下（要件定義・設計書・テスト計画等の開発資料）は Pages に
+# 掲載しない方針のため除外する。
 exclude:
-  - design/poc/results/
+  - design/
