@@ -6,6 +6,7 @@ on:
       - main
     paths:
       - 'README.md'
+      - '_config.yml'
       - 'data/master.json'
       - 'data/banner_features.json'
       - '.github/workflows/pages.yml'
@@ -35,72 +36,24 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Set up Python 3.11
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
-
-      - name: Install markdown renderer
-        run: pip install markdown
-
-      - name: Build site
-        shell: bash
-        run: |
-          mkdir -p _site
-          # 配信データ（アプリが起動時に取得）
-          cp data/master.json _site/master.json
-          cp data/banner_features.json _site/banner_features.json
-          # README.md をトップページ (index.html) にレンダリング。
-          # 旧 Pages（Deploy from a branch の Jekyll 自動描画）と同等に
-          # README をそのまま使い方ページとして表示する。
-          python - <<'PY'
-          import markdown
-
-          with open("README.md", encoding="utf-8") as f:
-              body = markdown.markdown(
-                  f.read(),
-                  extensions=["fenced_code", "tables", "toc"],
-              )
-
-          html = f"""<!DOCTYPE html>
-          <html lang="ja">
-          <head>
-            <meta charset="utf-8">
-            <meta name="viewport" content="width=device-width, initial-scale=1">
-            <title>LivelyRec</title>
-            <style>
-              body {{ font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Hiragino Kaku Gothic ProN", "Noto Sans JP", sans-serif;
-                      max-width: 820px; margin: 2em auto; padding: 0 1.2em; color: #24292f; line-height: 1.7; }}
-              h1, h2, h3 {{ border-bottom: 1px solid #eaecef; padding-bottom: 0.3em; }}
-              h1 {{ font-size: 1.9em; }}
-              code {{ background: #f6f8fa; padding: 0.15em 0.4em; border-radius: 4px;
-                      font-family: "SFMono-Regular", Consolas, monospace; font-size: 0.9em; }}
-              pre {{ background: #f6f8fa; padding: 1em; border-radius: 6px; overflow-x: auto; }}
-              pre code {{ background: none; padding: 0; }}
-              a {{ color: #0969da; text-decoration: none; }}
-              a:hover {{ text-decoration: underline; }}
-              table {{ border-collapse: collapse; }}
-              th, td {{ border: 1px solid #d0d7de; padding: 0.4em 0.8em; }}
-              th {{ background: #f6f8fa; }}
-              footer {{ margin-top: 3em; color: #8b949e; font-size: 0.85em;
-                        border-top: 1px solid #eaecef; padding-top: 1em; }}
-            </style>
-          </head>
-          <body>
-          {body}
-          <footer>
-            pop&apos;n music は KONAMI Amusement の登録商標です。本ソフトウェアは KONAMI Amusement とは関係ありません（非公式ツール）。
-          </footer>
-          </body>
-          </html>
-          """
-          with open("_site/index.html", "w", encoding="utf-8") as f:
-              f.write(html)
-          print("index.html generated from README.md")
-          PY
-
       - name: Configure Pages
         uses: actions/configure-pages@v5
+
+      # 旧「Deploy from a branch」と同じ Jekyll パイプラインで README.md を
+      # 描画する。これにより元の Pages サイトと同一のテーマ・スタイル・
+      # リンクが復元される。出力は ./_site。
+      - name: Build with Jekyll
+        uses: actions/jekyll-build-pages@v1
+        with:
+          source: ./
+          destination: ./_site
+
+      # アプリが起動時に取得する配信データを Jekyll 出力へ追加する。
+      - name: Add distribution data
+        shell: bash
+        run: |
+          cp data/master.json _site/master.json
+          cp data/banner_features.json _site/banner_features.json
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
