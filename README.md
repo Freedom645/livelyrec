@@ -25,28 +25,28 @@ LivelyRec は **常時ポータブル** で動作します。
 
 ### 環境構築
 
-```bash
-python -m venv .venv
-.venv\Scripts\activate
-pip install -e ".[dev]"
-```
-
-または:
+[uv](https://docs.astral.sh/uv/) を使用します。
 
 ```bash
-pip install -r requirements-dev.txt
+# 開発用一式（dev グループは既定で入る。OCR 抜きの軽量セット）
+uv sync
+
+# OCR エンジン（PaddleOCR）も含めたフルセット
+uv sync --extra ocr
 ```
+
+`uv` は `pyproject.toml` の `requires-python` に従って Python 3.11 を自動取得します。
 
 ### 開発実行
 
 ```bash
-python -m livelyrec.app
+uv run python -m livelyrec.app
 ```
 
 ### テスト
 
 ```bash
-pytest
+uv run pytest
 ```
 
 ### ビルド

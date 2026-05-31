@@ -27,7 +27,6 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
 from livelyrec.application.banner_match_service import BannerMatchService  # noqa: E402
 from livelyrec.infrastructure.banner_features import (  # noqa: E402
-    DEFAULT_TARGET_SIZE,
     dhash64,
     hamming,
     phash64,
@@ -96,7 +95,6 @@ def run_set(
         print(f"\n  {sample.name}")
         for roi_name, roi in rois:
             top3 = topk_for_frame(svc, img, roi, k=3)
-            ph_d = top3[0][1] if top3 else 999
             print(f"    ROI={roi_name:<14} {roi}")
             for rank, (sid, d) in enumerate(top3, start=1):
                 title = title_of.get(sid, "(unknown)")

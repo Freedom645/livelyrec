@@ -22,7 +22,6 @@
 from __future__ import annotations
 
 import argparse
-import glob
 import json
 import logging
 import sys
@@ -33,8 +32,8 @@ import cv2
 import numpy as np
 
 try:
-    from rapidfuzz import process as rf_process
     from rapidfuzz import fuzz as rf_fuzz
+    from rapidfuzz import process as rf_process
 except ImportError:  # pragma: no cover
     rf_process = None
     rf_fuzz = None
@@ -194,7 +193,7 @@ def cmd_features(args: argparse.Namespace) -> int:
         for _ in range(20):
             _ = sorted([(hamming(ref, t), t) for t in targets])[:5]
         t_topk = (time.perf_counter() - t0) / 20 * 1000
-        print(f"\nbench (avg of n=200):")
+        print("\nbench (avg of n=200):")
         print(f"  phash64: {t_p:.3f} ms")
         print(f"  dhash64: {t_d:.3f} ms")
         print(f"  top-5 over 1347 entries (phash): {t_topk:.3f} ms")

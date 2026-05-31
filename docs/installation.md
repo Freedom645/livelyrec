@@ -48,13 +48,13 @@ LivelyRec/
 
 ## ソースから動かす場合（開発者向け）
 
+[uv](https://docs.astral.sh/uv/) を使用します。
+
 ```bash
 git clone https://github.com/Freedom645/livelyrec.git
 cd livelyrec
-python -m venv .venv
-.venv\Scripts\activate
-pip install -r requirements-dev.txt
-python -m livelyrec.app
+uv sync --extra ocr
+uv run python -m livelyrec.app
 ```
 
-Python 3.11 必須。
+Python 3.11 必須（`uv` が `pyproject.toml` の指定に従い自動取得します）。
