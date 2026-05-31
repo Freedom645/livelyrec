@@ -2,6 +2,10 @@
 
 pop'n music lively のゲーム画面を OBS WebSocket 経由で取得し、画像認識によりスコアを自動記録、OBS ブラウザソース向けの配信支援表示を提供するスタンドアロン Windows アプリ。
 
+## ドキュメント / 使い方ガイド
+
+導入から配信支援オーバーレイの設定まで、画像付きの解説を **[公式ガイド（GitHub Pages）](https://freedom645.github.io/livelyrec/)** にまとめています。
+
 ## ダウンロード
 
 最新版は **[GitHub Releases](https://github.com/Freedom645/livelyrec/releases/latest)** から入手できます。

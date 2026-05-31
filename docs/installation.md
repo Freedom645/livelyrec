@@ -37,7 +37,13 @@ LivelyRec/
 
 `LivelyRec.exe` をダブルクリックで起動します。Windows Defender SmartScreen の警告が出る場合は「詳細情報」→「実行」で先へ進めてください（実行ファイルに署名が無いため）。
 
+![SmartScreen の警告画面](images/smartscreen-warning.png)
+*「詳細情報」をクリックすると現れる「実行」ボタンから起動できます。*
+
 初回起動時は OBS 接続情報が未設定なので、**画面右上「設定」ボタン**から接続情報を入力してください。詳細は [使い方](usage.html) を参照。
+
+![メイン画面右上の設定ボタン](images/settings-button.png)
+*画面右上の「設定」ボタンから接続情報を入力します。*
 
 ## 4. アップデート
 

@@ -38,6 +38,17 @@ poc/results/digit_recognition/
 # コミット禁止。著作権配慮のためリポジトリには一切含めない。NFR-LEGAL-001）
 poc_out/
 
+# バナー特徴量マスタの生成ツール・関連設計資料は開発者ローカル専用とし、
+# 公開リポジトリには含めない（生成済みの数値ハッシュ data/banner_features.json のみ配布）。
+scripts/build_banner_master.py
+scripts/poc/banner_collect.py
+scripts/poc/banner_match.py
+scripts/poc/select_banner_roi_sweep.py
+scripts/poc/test_banner_recognition.py
+scripts/poc/analyze_lively_coverage.py
+docs/design/11_詳細設計_バナー認識.md
+docs/design/poc/04_banner_recognition.md
+
 # Runtime logs (PyInstaller ビルドログ、アプリ実行ログ等)
 *.log
 build_log.txt

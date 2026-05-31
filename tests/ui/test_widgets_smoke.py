@@ -137,12 +137,11 @@ def test_settings_dialog_has_banner_tab(qtbot) -> None:
 
 
 def test_about_dialog_contains_konami_disclaimer(qtbot) -> None:
-    """About ダイアログに KONAMI 公式非関連の免責が含まれる（v0.9: 出典表示は撤去）。"""
+    """About ダイアログに KONAMI 公式非関連の免責が含まれる。"""
     from livelyrec.ui.about_dialog import ABOUT_BODY, AboutDialog
     dlg = AboutDialog()
     qtbot.addWidget(dlg)
     assert "コナミデジタル" in ABOUT_BODY
     assert "無関係" in ABOUT_BODY
-    # 出典表示は撤去済み
-    assert "remywiki" not in ABOUT_BODY
-    assert "fandom" not in ABOUT_BODY
+    # 外部サイトの出典表示は含めない
+    assert "参照: " not in ABOUT_BODY

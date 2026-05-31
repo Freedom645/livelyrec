@@ -244,8 +244,8 @@ class MainWindow(QMainWindow):
             QMessageBox.warning(self, "失敗", str(e))
 
     def _on_about(self) -> None:
-        # v2.0: バナー画像参照元の出典属性表示と免責表示を含む AboutDialog を使用
-        # （FR-BAN-008）。リッチテキスト対応のため独立ダイアログ。
+        # バージョン情報と免責表示を含む AboutDialog を使用。
+        # リッチテキスト対応のため独立ダイアログ。
         from livelyrec.ui.about_dialog import AboutDialog
         AboutDialog(self).exec()
 
